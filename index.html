@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hustle Life</title>
+<style>
+:root{color-scheme:dark;--bg:#121417;--card:#1b1e23;--ink:#e9e6df;--mut:#8d9099;--acc:#c8a96a;--bad:#d0695f;--bd:#2a2e35;--ok:#7fb08a}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+.wrap{max-width:760px;margin:0 auto;padding:0 14px 40px}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding:14px 0 0;border-bottom:1px solid var(--bd)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+h1{font:600 20px Georgia,"Times New Roman",serif;margin:0}
+h2{font:600 13px system-ui,sans-serif;margin:0 0 10px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.meta{font-size:13px;color:var(--mut)}
+.tabs{display:flex;gap:2px;overflow-x:auto;margin-top:10px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;background:none;border:0;color:var(--mut);font:inherit;font-size:14px;padding:10px 12px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.tab.on{color:var(--ink);border-bottom-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-top:14px}
+.bars{display:grid;gap:8px}
+.bar-row{display:grid;grid-template-columns:72px 1fr 28px;align-items:center;gap:10px;font-size:13px;color:var(--mut)}
+.bar{height:6px;background:var(--bd);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--acc)}
+.bar-row b{color:var(--ink);font-weight:500;text-align:right}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}
+.fact{display:flex;justify-content:space-between;gap:10px;font-size:14px;border-bottom:1px dotted var(--bd);padding-bottom:6px}
+.fact span{color:var(--mut)}
+.fact b{font-weight:500;text-align:right}
+.neg{color:var(--bad)!important}
+.list{max-height:420px;overflow:auto;margin:0 -4px;padding:0 4px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--bd)}
+.row:last-child{border-bottom:0}
+.rt{min-width:0;flex:1}
+.rt b{display:block;font-weight:500;overflow-wrap:anywhere}
+.rt small{display:block;color:var(--mut);font-size:12.5px;overflow-wrap:anywhere}
+.acts{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.btn{font:inherit;font-size:13px;background:var(--acc);color:#15171a;border:0;border-radius:7px;padding:8px 13px;cursor:pointer;white-space:nowrap;line-height:1.2}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--bd)}
+.btn:disabled{opacity:.35;cursor:default}
+.btn.next{background:var(--ink);color:var(--bg);padding:10px 16px;font-size:14px}
+select{font:inherit;font-size:13px;background:var(--bg);color:var(--ink);border:1px solid var(--bd);border-radius:7px;padding:7px 8px;max-width:150px}
+.event{border-left:3px solid var(--acc)}
+.event p{margin:0 0 12px;font:500 17px Georgia,serif;line-height:1.4}
+.event .choices{display:flex;flex-wrap:wrap;gap:8px}
+.bar-big{height:8px;background:var(--bd);border-radius:4px;overflow:hidden;margin:8px 0 4px}
+.bar-big i{display:block;height:100%;background:var(--acc)}
+.log{max-height:300px;overflow:auto;font-size:13px;color:var(--mut)}
+.log div{padding:6px 0;border-bottom:1px dashed var(--bd)}
+.hint{font-size:13px;color:var(--mut);margin:0 0 6px}
+input{font:inherit;padding:11px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--ink);width:100%;margin:12px 0 14px}
+.search{margin:0 0 10px}
+.title{font:600 28px Georgia,serif;margin:30px 0 6px}
+@media (max-width:520px){.facts{grid-template-columns:1fr}.bar-row{grid-template-columns:62px 1fr 26px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="top">
+      <div><h1 id="hd-name">Hustle Life</h1><div class="meta" id="hd-meta"></div></div>
+      <button class="btn next" id="ageBtn" onclick="ageUp()">Age up</button>
+    </div>
+    <nav class="tabs" id="tabs"></nav>
+  </header>
+  <main id="app"></main>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let S = null;
+
+const clamp = v => Math.max(0, Math.min(100, Math.round(v)));
+const R = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const money = n => { const v=Math.round(n), a=Math.abs(v); const s = CFG.compact && a>=1e6 ? (a/1e6).toFixed(2)+'M' : CFG.compact && a>=1e3 ? (a/1e3).toFixed(1)+'k' : a.toLocaleString('en-US'); return (v<0?'-':'')+CFG.currency+s; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// Settings. Every setting here changes the game or the screen. Defaults are the original values.
+const CFG_DEFAULT={ap:4,eventChance:55,startCash:200,living:100,wealthTax:1,takeHome:72,savingsRate:4,debtRate:10,stockVol:25,promo:10,decay:100,deathAge:90,lottery:60,flavor:true,logLen:300,quickN:4,showQuick:true,show_health:true,show_happy:true,show_smarts:true,show_looks:true,show_charm:true,accent:'#c8a96a',font:15,currency:'$',compact:false,tab_edu:true,tab_career:true,tab_people:true,tab_activities:true,tab_assets:true,tab_milestones:true};
+const CFG={...CFG_DEFAULT};
+const SET_UI=[
+  ['Gameplay','ap','Action points per year','num',2,8,1],['Gameplay','eventChance','Chance of a life event each year (%)','num',0,100,5],['Gameplay','startCash','Starting cash (for new lives)','num',0,5000,100],
+  ['Gameplay','living','Living cost multiplier (%)','num',0,200,10],['Gameplay','wealthTax','Wealth tax above $200k (%)','num',0,5,0.5],['Gameplay','takeHome','Take-home share of pay (%)','num',50,90,1],
+  ['Gameplay','savingsRate','Savings interest (%)','num',0,10,0.5],['Gameplay','debtRate','Debt interest (%)','num',0,30,1],['Gameplay','stockVol','Stock volatility (%)','num',0,50,5],
+  ['Gameplay','promo','Promotion chance (%)','num',0,50,5],['Gameplay','decay','Health decline speed (%)','num',0,200,10],['Gameplay','deathAge','Age of possible natural death','num',70,110,1],
+  ['Gameplay','lottery','Lottery: 1 in N tickets wins','num',10,200,10],['Gameplay','flavor','Show small everyday moments','bool'],
+  ['Story','logLen','Story log length','num',50,300,50],
+  ['Life page','quickN','Quick picks shown','num',1,8,1],['Life page','showQuick','Show the Try this year card','bool'],
+  ['Life page','show_health','Show Health bar','bool'],['Life page','show_happy','Show Happiness bar','bool'],['Life page','show_smarts','Show Smarts bar','bool'],['Life page','show_looks','Show Looks bar','bool'],['Life page','show_charm','Show Charm bar','bool'],
+  ['Appearance','accent','Accent color','sel',[['#c8a96a','Gold'],['#4fb8a0','Teal'],['#6fa8dc','Blue'],['#d27a8a','Rose']]],
+  ['Appearance','font','Text size (px)','num',13,18,1],['Appearance','currency','Currency symbol','sel',[['$','Dollar'],['€','Euro'],['£','Pound'],['¥','Yen']]],
+  ['Appearance','compact','Short numbers (1.2k, 3.4M)','bool'],
+  ['Tabs','tab_edu','Show Education tab','bool'],['Tabs','tab_career','Show Career tab','bool'],['Tabs','tab_people','Show People tab','bool'],['Tabs','tab_activities','Show Activities tab','bool'],['Tabs','tab_assets','Show Assets tab','bool'],['Tabs','tab_milestones','Show Milestones tab','bool']
+];
+
+const FIRST = ['Alex','Jordan','Sam','Priya','Mateo','Chen','Amara','Leo','Nadia','Kai','Ruth','Omar','Elena','Theo'];
+const TOWNS = ['a mid-sized town in the Midwest','a rented apartment above a laundromat','a coastal city with long winters','a suburb with good schools and long commutes'];
+const CITIES=[{n:'a small town',m:0.8},{n:'a mid-size city',m:1},{n:'a big city',m:1.6}];
+const BIZ = ['Bakery','Car wash','Online shop','Landscaping company','Coffee cart','Bike repair shop'];
+
+// Education: years, yearly cost, yearly stipend, required degree, smarts needed
+// 100 more programs. Fields: id, name, years, yearly cost, yearly stipend, required degree (or null), smarts needed, description.
+const EDU_MORE = [
+  ['cna','Certified nursing assistant',1,1500,0,null,5,'Hands-on patient care and a state exam.'],
+  ['emt','EMT certification',1,1200,0,null,15,'Emergency medical technician training.'],
+  ['pharmtech','Pharmacy technician certificate',1,2000,0,null,15,'Preparing and dispensing medications.'],
+  ['cdl','Commercial driver license program',1,3000,0,null,10,'Training and testing for heavy trucks.'],
+  ['plumb','Plumbing apprenticeship',4,1000,22000,null,15,'Paid plumbing training with classwork.'],
+  ['hvac','HVAC certificate',1,4000,0,null,15,'Heating and cooling technician training.'],
+  ['weld','Welding certificate',1,3500,0,null,10,'Welding techniques and shop safety.'],
+  ['carp','Carpentry apprenticeship',3,800,20000,null,10,'Paid carpentry training on job sites.'],
+  ['cosm','Cosmetology license',1,15000,0,null,10,'Hair and beauty licensing program.'],
+  ['secu','Security guard license',1,150,0,null,5,'Basic state licensing for security work.'],
+  ['bookkeep','Bookkeeping certificate',1,1200,0,null,15,'Accounting basics for small businesses.'],
+  ['paralegal','Paralegal certificate',1,6000,0,null,20,'Legal support and document training.'],
+  ['dental','Dental assistant certificate',1,5000,0,null,15,'Chairside dental assisting skills.'],
+  ['vettech','Veterinary technician certificate',2,8000,0,null,20,'Animal health technician training.'],
+  ['firecad','Fire academy',1,2000,0,null,20,'Fire academy and basic rescue training.'],
+  ['dispatch','Logistics dispatcher course',1,800,0,null,10,'Freight and dispatch fundamentals.'],
+  ['realest','Real estate license course',1,700,0,null,15,'State real estate licensing course.'],
+  ['insur','Insurance license course',1,500,0,null,15,'Property and casualty licensing.'],
+  ['solar','Solar installer certificate',1,2500,0,null,15,'Photovoltaic installation training.'],
+  ['wind','Wind turbine technician certificate',1,6000,0,null,20,'Turbine maintenance and climbing safety.'],
+  ['aasbus','Associate in business',2,4000,0,null,15,'Two-year business foundations.'],
+  ['aaseng','Associate in engineering technology',2,4000,0,null,20,'Applied engineering and lab work.'],
+  ['aashealth','Associate in health sciences',2,4000,0,null,20,'Health sciences foundations.'],
+  ['aashosp','Associate in hospitality management',2,4000,0,null,15,'Hotel and restaurant operations basics.'],
+  ['aaspolice','Associate in criminal justice',2,4000,0,null,20,'Criminal justice and law enforcement basics.'],
+  ['aasaviation','Associate in aviation maintenance',2,8000,0,null,30,'Aircraft maintenance training.'],
+  ['aasit','Associate in IT support',2,4000,0,null,20,'Help desk and network basics.'],
+  ['aaslogist','Associate in supply chain',2,4000,0,null,20,'Warehouse and logistics management.'],
+  ['aaschild','Associate in early childhood education',2,4000,0,null,15,'Early childhood teaching credential.'],
+  ['aasenv','Associate in environmental science',2,4000,0,null,25,'Environmental monitoring basics.'],
+  ['babus','Bachelor of business administration',4,12000,0,null,30,'General business degree.'],
+  ['baecon','Bachelor of economics',4,12000,0,null,40,'Markets, policy, and data.'],
+  ['bapsych','Bachelor of psychology',4,12000,0,null,30,'Human behavior and research.'],
+  ['basoc','Bachelor of sociology',4,12000,0,null,30,'Social structures and research.'],
+  ['bahist','Bachelor of history',4,12000,0,null,30,'Past events and primary sources.'],
+  ['bapoli','Bachelor of political science',4,12000,0,null,35,'Government and public policy.'],
+  ['babio','Bachelor of biology',4,14000,0,null,40,'Life sciences with lab work.'],
+  ['bachem','Bachelor of chemistry',4,14000,0,null,45,'Chemistry labs and research.'],
+  ['baphys','Bachelor of physics',4,14000,0,null,50,'Physics theory and labs.'],
+  ['baenv','Bachelor of environmental science',4,12000,0,null,35,'Ecology and sustainability.'],
+  ['bacomm','Bachelor of communications',4,12000,0,null,30,'Media, public relations, and messaging.'],
+  ['bamkt','Bachelor of marketing',4,12000,0,null,30,'Brand strategy and sales.'],
+  ['bafin','Bachelor of finance',4,14000,0,null,40,'Investing, banking, and corporate finance.'],
+  ['baacc','Bachelor of accounting',4,13000,0,null,40,'Auditing, tax, and financial reporting.'],
+  ['bahr','Bachelor of human resources',4,12000,0,null,30,'Hiring, training, and workplace policy.'],
+  ['bair','Bachelor of international relations',4,13000,0,null,35,'Diplomacy and global affairs.'],
+  ['baedu','Bachelor of education',4,11000,0,null,30,'Teacher training and classroom practice.'],
+  ['baspec','Bachelor of special education',4,11000,0,null,35,'Teaching students with diverse needs.'],
+  ['basocwork','Bachelor of social work',4,10000,0,null,30,'Community services and casework.'],
+  ['banutr','Bachelor of nutrition science',4,12000,0,null,35,'Diet and health science.'],
+  ['bapubh','Bachelor of public health',4,12000,0,null,35,'Population health and prevention.'],
+  ['baag','Bachelor of agricultural science',4,11000,0,null,30,'Farming, soil, and crop science.'],
+  ['barch','Bachelor of architecture',5,20000,0,null,55,'Five-year design and building program.'],
+  ['bacivil','Bachelor of civil engineering',4,15000,0,null,50,'Roads, bridges, and buildings.'],
+  ['bamech','Bachelor of mechanical engineering',4,15000,0,null,50,'Machines, energy, and design.'],
+  ['baelec','Bachelor of electrical engineering',4,15000,0,null,50,'Circuits, power, and systems.'],
+  ['bachemeng','Bachelor of chemical engineering',4,16000,0,null,55,'Process and materials engineering.'],
+  ['baaero','Bachelor of aerospace engineering',4,17000,0,null,55,'Aircraft and spacecraft engineering.'],
+  ['baactu','Bachelor of actuarial science',4,14000,0,null,55,'Risk modeling for insurers.'],
+  ['balogops','Bachelor of logistics and operations',4,12000,0,null,35,'Operations and supply chain management.'],
+  ['bahosp','Bachelor of hospitality management',4,12000,0,null,30,'Hotels, travel, and events.'],
+  ['basport','Bachelor of sports management',4,12000,0,null,30,'Teams, venues, and league operations.'],
+  ['bajourn','Bachelor of journalism',4,12000,0,null,35,'Reporting and news writing.'],
+  ['bacrim','Bachelor of criminology',4,12000,0,null,35,'Crime, justice, and policy.'],
+  ['baurban','Bachelor of urban studies',4,12000,0,null,35,'Cities, housing, and planning.'],
+  ['banursacc','Accelerated nursing degree',2,20000,0,'ba',45,'Second-degree nursing program.'],
+  ['maedu','Master of education',2,12000,0,'ba',40,'Advanced teaching and leadership.'],
+  ['mapsy','Master of clinical psychology',3,30000,0,'ba',60,'Counseling and therapy training.'],
+  ['masocwork','Master of social work',2,18000,0,'ba',45,'Advanced casework and policy.'],
+  ['mapubh','Master of public health',2,20000,0,'ba',50,'Population health and policy.'],
+  ['mapubpol','Master of public policy',2,25000,0,'ba',55,'Government analysis and policy design.'],
+  ['maurb','Master of urban planning',2,20000,0,'ba',50,'Zoning, housing, and transport planning.'],
+  ['maarch','Master of architecture',2,25000,0,'ba',60,'Advanced design and building studies.'],
+  ['maeng','Master of engineering',2,25000,0,'ba',60,'Advanced engineering study.'],
+  ['madata','Master of data analytics',2,30000,0,'ba',60,'Business analytics and modeling.'],
+  ['macyber','Master of cybersecurity',2,30000,0,'ba',60,'Security operations and policy.'],
+  ['mafin','Master of finance',2,40000,0,'ba',55,'Investment and corporate finance.'],
+  ['maacc','Master of accountancy',2,30000,0,'ba',45,'Advanced accounting and tax.'],
+  ['mahr','Master of human resource management',2,25000,0,'ba',45,'Workforce strategy and policy.'],
+  ['mair','Master of international affairs',2,30000,0,'ba',50,'Global policy and diplomacy.'],
+  ['macrim','Master of criminal justice',2,20000,0,'ba',45,'Justice system leadership.'],
+  ['macounsel','Master of counseling',2,18000,0,'ba',45,'Licensed counseling training.'],
+  ['malib','Master of library science',2,15000,0,'ba',40,'Information management and libraries.'],
+  ['manurse','Master of nursing',2,25000,0,'nurse',55,'Advanced nursing and leadership.'],
+  ['dpt','Doctor of physical therapy',3,45000,0,'ba',70,'Clinical rehabilitation doctorate.'],
+  ['dpharm','Doctor of pharmacy',4,50000,0,'ba',70,'Pharmacist doctorate.'],
+  ['dvm','Doctor of veterinary medicine',4,50000,0,'ba',70,'Veterinary doctorate.'],
+  ['ddental','Doctor of dental surgery',4,55000,0,'ba',75,'Dental doctorate.'],
+  ['doptom','Doctor of optometry',4,45000,0,'ba',70,'Eye care doctorate.'],
+  ['dot','Doctor of occupational therapy',3,40000,0,'ba',65,'Therapy doctorate.'],
+  ['maslp','Master of speech-language pathology',2,30000,0,'ba',55,'Speech and swallowing therapy.'],
+  ['maecon','Master of economics',2,25000,0,'ba',60,'Applied economics and policy.'],
+  ['mamgmt','Master of management',2,35000,0,'ba',50,'Management and leadership.'],
+  ['mahosp','Master of hospitality administration',2,28000,0,'ba',45,'Hotel and events leadership.'],
+  ['masport','Master of sports analytics',2,30000,0,'ba',60,'Sports data and performance.'],
+  ['machemsci','Master of chemical sciences',2,20000,0,'ba',60,'Advanced lab science.'],
+  ['mabio','Master of biotechnology',2,30000,0,'ba',60,'Biotech research and industry.'],
+  ['maenvmgmt','Master of environmental management',2,22000,0,'ba',50,'Environmental policy and management.'],
+  ['majourn','Master of journalism',2,25000,0,'ba',45,'Advanced reporting and media law.'],
+  ['mamktg','Master of marketing communications',2,28000,0,'ba',50,'Advanced branding and media.']
+].map(([id,n,years,cost,stipend,req,sm,d])=>({id,n,years,cost,stipend,req,sm,d}));
+
+const EDU = [...EDU_MORE,
+  {id:'cc',    n:'Associate degree',           years:2, cost:4000,  stipend:0,     req:null, sm:10, d:'Community college transfer or technical associate.'},
+  {id:'trade', n:'Electrician apprenticeship', years:4, cost:1000,  stipend:24000, req:null, sm:20, d:'Paid on-the-job training with classroom hours.'},
+  {id:'nurse', n:'Nursing (BSN)',              years:4, cost:12000, stipend:0,     req:null, sm:30, d:'Bachelor of Science in Nursing with clinicals.'},
+  {id:'ba',    n:"Bachelor's degree",          years:4, cost:12000, stipend:0,     req:null, sm:30, d:'Four-year university degree in any major.'},
+  {id:'ma',    n:"Master's degree",            years:2, cost:14000, stipend:0,     req:'ba', sm:40, d:'Graduate study in a chosen field.'},
+  {id:'mba',   n:'MBA',                        years:2, cost:60000, stipend:0,     req:'ba', sm:45, d:'Business school. Expensive and worth it for some.'},
+  {id:'law',   n:'Law school (JD)',            years:3, cost:25000, stipend:0,     req:'ba', sm:60, d:'Three years of law school. Bar exam at the end.'},
+  {id:'med',   n:'Medical school (MD)',        years:7, cost:20000, stipend:0,     req:'ba', sm:70, d:'Four years of medical school plus three years of residency.'},
+  {id:'phd',   n:'PhD',                        years:5, cost:0,     stipend:30000, req:'ma', sm:65, d:'Funded doctoral research with a small stipend.'}
+];
+
+// Jobs: approximate US median pay, rounded
+// 100 more careers. Fields: name, approximate US median pay, required degree (or null), smarts needed.
+const JOBS_MORE = [
+  ['Barista',29000,null,5],['Retail sales associate',32000,null,5],['Restaurant server',33000,null,5],['Janitor',36000,null,5],['Home health aide',33000,null,10],
+  ['Landscaper',38000,null,10],['Delivery driver',38000,null,10],['Bus driver',48000,null,15],['Mail carrier',60000,null,15],['Security guard',37000,null,10],
+  ['Call center agent',40000,null,15],['Bank teller',38000,null,15],['Forklift operator',42000,null,15],['Construction laborer',42000,null,10],['Carpenter',56000,'trade',20],
+  ['Welder',51000,'trade',20],['HVAC technician',58000,'trade',25],['Machinist',49000,'trade',25],['Dental hygienist',87000,'cc',35],['Paralegal',60000,'cc',30],
+  ['Radiology technician',71000,'cc',35],['Respiratory therapist',77000,'cc',35],['Pharmacy technician',40000,'cc',25],['Veterinary technician',40000,'cc',25],['Firefighter',56000,'cc',25],
+  ['Paramedic',40000,'cc',30],['Emergency dispatcher',48000,null,25],['Line cook',36000,null,10],['Hotel manager',62000,'ba',35],['Restaurant manager',66000,'ba',30],
+  ['Real estate agent',61000,'cc',30],['Insurance agent',56000,'cc',30],['Sales representative',70000,'ba',30],['Marketing coordinator',60000,'ba',35],['Journalist',55000,'ba',35],
+  ['Social worker',55000,'ba',35],['Psychologist',90000,'ma',55],['School counselor',52000,'ma',45],['Librarian',64000,'ma',40],['Museum curator',62000,'ma',50],
+  ['Civil engineer',96000,'ba',55],['Mechanical engineer',99000,'ba',55],['Electrical engineer',104000,'ba',55],['Chemical engineer',110000,'ba',60],['Aerospace engineer',130000,'ba',65],
+  ['Data scientist',108000,'ma',60],['Cybersecurity analyst',120000,'ba',60],['Systems administrator',95000,'ba',50],['Web developer',92000,'ba',45],['Product manager',130000,'ba',60],
+  ['HR manager',130000,'ma',50],['Management consultant',105000,'mba',60],['Economist',115000,'ma',65],['Actuary',120000,'ba',65],['Architect',90000,'ba',60],
+  ['Land surveyor',65000,'cc',35],['Airline pilot',220000,'cc',60],['Air traffic controller',137000,'cc',60],['Merchant marine officer',100000,'cc',45],['Veterinarian',115000,'ma',70],
+  ['Dentist',170000,'med',80],['Optometrist',130000,'ma',65],['Physical therapist',100000,'ma',55],['Occupational therapist',96000,'ma',55],['Speech-language pathologist',90000,'ma',55],
+  ['Nurse practitioner',130000,'ma',65],['Anesthesiologist',380000,'med',85],['Psychiatrist',250000,'med',80],['Pediatrician',230000,'med',78],['Dietitian',66000,'ba',40],
+  ['Research scientist',98000,'phd',70],['Chemist',85000,'ba',55],['Pharmaceutical sales rep',90000,'ba',50],['Judge',150000,'law',75],['Patent attorney',160000,'law',75],
+  ['Tax preparer',45000,'cc',30],['Bookkeeper',50000,'cc',30],['Loan officer',72000,'ba',40],['Financial advisor',95000,'ba',50],['Hedge fund analyst',150000,'mba',70],
+  ['Venture capitalist',160000,'mba',70],['Startup founder',40000,null,60],['Podcast host',55000,null,50],['Content creator',52000,null,45],['Urban planner',80000,'ma',55],
+  ['Elevator mechanic',99000,'trade',35],['Wind turbine technician',61000,'trade',25],['Solar installer',48000,'trade',20],['Flight attendant',64000,null,25],['Executive chef',72000,'cc',40],
+  ['Hairstylist',40000,'cc',25],['Esthetician',40000,'cc',25],['Sports coach',47000,'ba',40],['Park ranger',49000,'ba',35],['Army officer',83000,'ba',55],
+  ['Soldier',34000,null,20],['Corrections officer',50000,null,20],['Event planner',53000,'ba',35],['Hospital administrator',105000,'mba',60],['Court reporter',65000,'cc',35]
+].map(([n,pay,need,sm])=>({n,pay,need,sm}));
+
+// Careers that need no formal education. Fields: name, approximate US median pay, required program (null), smarts needed.
+const JOBS_NOEDU = [
+  ['Rideshare driver',38000,null,5],['Taxi driver',36000,null,5],['Dishwasher',30000,null,0],['Stocker',31000,null,0],['Grocery bagger',27000,null,0],
+  ['Pizza delivery driver',32000,null,0],['Construction flagger',36000,null,5],['Roofer helper',40000,null,10],['Moving laborer',36000,null,5],['Car detailer',34000,null,5],
+  ['Bartender',34000,null,10],['Lifeguard',30000,null,5],['Crossing guard',30000,null,0],['Door-to-door sales',35000,null,15],['Commercial fisher',45000,null,15],
+  ['Farm worker',34000,null,5],['Beekeeper',38000,null,15],['Telemarketer',34000,null,10],['Street vendor',32000,null,10],['Day trader',50000,null,40],
+  ['Personal assistant',40000,null,15],['Tow truck operator',44000,null,10],['Mechanic helper',34000,null,5],['Flooring installer',42000,null,10],['Pool cleaner',36000,null,5],
+  ['Food truck owner',50000,null,35],['Caregiver',32000,null,5],['Garbage collector',44000,null,5],['Retail store manager',52000,null,25]
+].map(([n,pay,need,sm])=>({n,pay,need,sm}));
+
+// 100 more careers. Each requires one specific program.
+const JOBS_MORE2 = [
+  ['Mortgage broker',68000,'bafin',35],['Claims adjuster',62000,'bafin',30],['Risk analyst',105000,'mafin',60],['Compliance officer',85000,'bafin',45],['Auditor',78000,'baacc',40],
+  ['Tax attorney',140000,'law',70],['Court clerk',44000,'aasbus',20],['Immigration officer',64000,'bapoli',35],['Diplomat',95000,'bair',60],['Intelligence analyst',95000,'bapoli',60],
+  ['Fire inspector',70000,'firecad',35],['Lifeguard supervisor',40000,'emt',25],['ER nurse',95000,'nurse',55],['ICU nurse',100000,'nurse',60],['Midwife',100000,'manurse',65],
+  ['Home inspector',62000,'aasbus',25],['Surveyor technician',50000,'aaseng',25],['Civil drafter',60000,'aaseng',30],['Industrial designer',75000,'barch',50],['Interior designer',64000,'barch',40],
+  ['Landscape architect',75000,'barch',50],['Construction manager',100000,'bacivil',50],['Project manager',95000,'mamgmt',50],['Operations manager',98000,'balogops',45],['Logistics analyst',80000,'balogops',40],
+  ['Purchasing agent',70000,'bamkt',35],['Buyer',65000,'bamkt',35],['Procurement specialist',68000,'balogops',35],['Warehouse manager',70000,'aaslogist',40],['Supply chain analyst',85000,'aaslogist',45],
+  ['Airport manager',85000,'aasaviation',45],['Flight dispatcher',80000,'aasaviation',45],['Ship captain',110000,'aaslogist',50],['Train conductor',62000,'aasbus',25],['Railroad engineer',78000,'aasaviation',30],
+  ['Auto body technician',47000,'autotech',20],['Diesel mechanic',58000,'autotech',25],['Aircraft mechanic',70000,'aasaviation',30],['Marine engineer',95000,'aaseng',40],['Oil rig worker',85000,'aaseng',25],
+  ['Geologist',88000,'baenv',50],['Environmental scientist',80000,'maenvmgmt',50],['Conservation scientist',66000,'baenv',40],['Forester',64000,'baenv',35],['Water treatment operator',50000,'aasenv',25],
+  ['Hydrologist',85000,'baenv',50],['Meteorologist',95000,'baphys',55],['Astronomer',110000,'phd',80],['Biomedical engineer',100000,'bachemeng',60],['Biochemist',100000,'mabio',70],
+  ['Lab technician',50000,'babio',35],['Clinical lab scientist',75000,'babio',45],['Pharmacologist',120000,'phd',75],['Epidemiologist',85000,'mapubh',60],['Health educator',60000,'mapubh',40],
+  ['Medical records specialist',48000,'aashealth',30],['Medical coder',50000,'aashealth',30],['Health information manager',85000,'aashealth',40],['Occupational health specialist',80000,'mapubh',50],['Sonographer',78000,'aashealth',40],
+  ['Phlebotomist',40000,'cna',20],['Surgical technician',57000,'aashealth',30],['Massage therapist',50000,'cosm',25],['Chiropractor',90000,'dpt',70],['Podiatrist',160000,'med',80],
+  ['Audiologist',85000,'maslp',60],['Orthodontist',220000,'ddental',85],['Oral surgeon',260000,'ddental',88],['Radiologist',350000,'med',85],['Dermatologist',350000,'med',85],
+  ['Cardiologist',400000,'med',88],['Neurologist',300000,'med',85],['Veterinary surgeon',150000,'dvm',80],['Zookeeper',40000,'baenv',35],['Marine biologist',70000,'babio',50],
+  ['Wildlife biologist',70000,'babio',50],['Animal trainer',40000,'aasenv',30],['Dog groomer',35000,'vettech',20],['Pet store manager',42000,'aasbus',25],['Crop scientist',75000,'baag',50],
+  ['Agronomist',80000,'baag',50],['Farm manager',70000,'baag',40],['Winery manager',70000,'bahosp',35],['Hotel concierge',40000,'aashosp',25],['Travel agent',45000,'aashosp',20],
+  ['Tour guide',38000,'bahist',25],['Cruise director',60000,'aashosp',30],['Casino manager',80000,'bahosp',40],['Lobbyist',110000,'bapoli',55],['Political campaign manager',90000,'bapoli',50],
+  ['Policy analyst',85000,'mapubpol',60],['City manager',110000,'mapubpol',60],['Union organizer',58000,'babus',40],['Customs officer',55000,'bair',35],['Foreign service officer',75000,'bair',60],
+  ['Local newspaper reporter',45000,'bajourn',35],['Public relations specialist',65000,'bacomm',35],['Broadcast technician',55000,'aasit',25],['Video production assistant',50000,'bacomm',30],['Event coordinator',48000,'bahosp',30]
+].map(([n,pay,need,sm])=>({n,pay,need,sm}));
+
+const JOBS = [...JOBS_MORE, ...JOBS_NOEDU, ...JOBS_MORE2,
+  {n:'Fast food crew',        pay:30000,  need:null,   sm:0},
+  {n:'Cashier',               pay:29000,  need:null,   sm:0},
+  {n:'Warehouse associate',   pay:37000,  need:null,   sm:10},
+  {n:'Truck driver',          pay:56000,  need:null,   sm:20},
+  {n:'Auto technician',       pay:48000,  need:'cc',   sm:25},
+  {n:'Electrician',           pay:62000,  need:'trade',sm:25},
+  {n:'Plumber',               pay:61000,  need:'trade',sm:25},
+  {n:'Police officer',        pay:72000,  need:'cc',   sm:35},
+  {n:'Registered nurse',      pay:86000,  need:'nurse',sm:40},
+  {n:'Accountant',            pay:81000,  need:'ba',   sm:40},
+  {n:'Teacher',               pay:67000,  need:'ba',   sm:40},
+  {n:'Financial analyst',     pay:99000,  need:'ba',   sm:50},
+  {n:'Software developer',    pay:132000, need:'ba',   sm:55},
+  {n:'Pharmacist',            pay:136000, need:'ma',   sm:55},
+  {n:'Investment banker',     pay:180000, need:'mba',  sm:60},
+  {n:'Lawyer',                pay:145000, need:'law',  sm:65},
+  {n:'Professor',             pay:95000,  need:'phd',  sm:70},
+  {n:'Physician',             pay:230000, need:'med',  sm:75},
+  {n:'Surgeon',               pay:390000, need:'med',  sm:85}
+];
+
+// Each career now requires one specific program. Careers not listed here keep their existing requirement.
+const PROG_FOR = {
+  'Truck driver':'cdl','Auto technician':'autotech','Electrician':'trade','Plumber':'plumb','Police officer':'aaspolice','Registered nurse':'nurse',
+  'Accountant':'baacc','Teacher':'baedu','Financial analyst':'bafin','Software developer':'swe','Pharmacist':'dpharm','Investment banker':'mba',
+  'Lawyer':'law','Professor':'phd','Physician':'med','Surgeon':'med',
+  'Carpenter':'carp','Welder':'weld','HVAC technician':'hvac','Machinist':'aaseng','Dental hygienist':'dhyg','Paralegal':'paralegal',
+  'Radiology technician':'aashealth','Respiratory therapist':'aashealth','Pharmacy technician':'pharmtech','Veterinary technician':'vettech',
+  'Firefighter':'firecad','Paramedic':'emt','Emergency dispatcher':'aaspolice','Hotel manager':'bahosp','Restaurant manager':'aashosp',
+  'Real estate agent':'realest','Insurance agent':'insur','Sales representative':'bamkt','Marketing coordinator':'bamkt','Journalist':'bajourn',
+  'Social worker':'basocwork','Psychologist':'mapsy','School counselor':'macounsel','Librarian':'malib','Museum curator':'bahist',
+  'Civil engineer':'bacivil','Mechanical engineer':'bamech','Electrical engineer':'baelec','Chemical engineer':'bachemeng','Aerospace engineer':'baaero',
+  'Data scientist':'madata','Cybersecurity analyst':'macyber','Systems administrator':'aasit','Web developer':'swe','Product manager':'mamgmt',
+  'HR manager':'mahr','Management consultant':'mba','Economist':'maecon','Actuary':'baactu','Architect':'barch','Land surveyor':'bacivil',
+  'Airline pilot':'pilot','Air traffic controller':'aasaviation','Merchant marine officer':'aaslogist','Veterinarian':'dvm','Dentist':'ddental',
+  'Optometrist':'doptom','Physical therapist':'dpt','Occupational therapist':'dot','Speech-language pathologist':'maslp','Nurse practitioner':'manurse',
+  'Anesthesiologist':'med','Psychiatrist':'med','Pediatrician':'med','Dietitian':'banutr','Research scientist':'phd','Chemist':'bachem',
+  'Pharmaceutical sales rep':'bamkt','Judge':'law','Patent attorney':'law','Tax preparer':'aasbus','Bookkeeper':'bookkeep','Loan officer':'bafin',
+  'Financial advisor':'bafin','Hedge fund analyst':'mafin','Venture capitalist':'mba','Urban planner':'maurb','Elevator mechanic':'trade',
+  'Wind turbine technician':'wind','Solar installer':'solar','Executive chef':'aashosp','Hairstylist':'cosm','Esthetician':'cosm',
+  'Sports coach':'basport','Park ranger':'baenv','Army officer':'bapoli','Event planner':'bahosp','Hospital administrator':'mamgmt','Court reporter':'aasbus'
+};
+// Programs needed by the careers above that did not exist yet.
+[['pilot','Commercial pilot license',2,40000,0,null,55,'Flight training to a commercial license.'],
+ ['autotech','Automotive technician certificate',1,3000,0,null,15,'Engine, brake, and diagnostic training.'],
+ ['dhyg','Dental hygiene associate',2,6000,0,null,35,'Dental cleaning and oral health care.'],
+ ['swe','Bachelor of software engineering',4,15000,0,null,55,'Software design, testing, and deployment.']
+].forEach(([id,n,years,cost,stipend,req,sm,d])=>EDU.push({id,n,years,cost,stipend,req,sm,d}));
+JOBS.forEach(j=>{ if(j.n in PROG_FOR) j.need=PROG_FOR[j.n]; });
+
+// Assets: realistic-ish purchase and yearly upkeep
+const ITEMS = {
+  bike:   {n:'Bicycle', price:450, upkeep:60, uses:[
+    {l:'Commute by bike', f:()=>{ S.health+=2; return 'Rode to work. Saved on transit.'; }},
+    {l:'Weekend ride', f:()=>{ S.happy+=3; S.health+=1; return 'Long ride along the river.'; }},
+    {l:'Sell it', sell:true, f:()=>{ S.cash+=250; return 'Sold the bike for $250.'; }}]},
+  laptop: {n:'Laptop', price:1300, upkeep:0, uses:[
+    {l:'Freelance project', f:()=>{ const t=Math.round(R(400,1500)); S.cash+=t; S.smarts+=1; return `Finished a freelance project for ${money(t)}.`; }},
+    {l:'Study online', f:()=>{ S.smarts+=2; return 'Finished an online course.'; }},
+    {l:'Sell it', sell:true, f:()=>{ S.cash+=550; return 'Sold the laptop for $550.'; }}]},
+  car: {n:'Used car', price:9000, upkeep:1400, uses:[
+    {l:'Drive for a ride app', f:()=>{ const t=Math.round(R(800,1600)); S.cash+=t; S.health-=2; return `Drove for a rideshare app. Made ${money(t)}.`; }},
+    {l:'Road trip', f:()=>{ S.cash-=350; S.happy+=6; return 'Road trip. Gas and motels cost $350.'; }},
+    {l:'Sell it', sell:true, f:()=>{ S.cash+=6500; return 'Sold the car for $6,500.'; }}]},
+  newcar: {n:'New car', price:35000, upkeep:2600, uses:[
+    {l:'Drive to a job interview', f:()=>{ S.charm+=2; return 'Arrived looking sharp.'; }},
+    {l:'Lease it out', f:()=>{ S.cash+=3000; return 'Rented it out for a weekend tour. $3,000.'; }},
+    {l:'Sell it', sell:true, f:()=>{ S.cash+=26000; return 'Sold the new car for $26,000.'; }}]},
+  guitar: {n:'Acoustic guitar', price:600, upkeep:0, uses:[
+    {l:'Busk downtown', f:()=>{ const t=Math.round(R(20,400)); S.cash+=t; S.happy+=2; return `Busked for ${money(t)}.`; }},
+    {l:'Post a performance video', f:()=>{ if(Math.random()<0.25){ S.cash+=3000; S.charm+=3; return 'The video took off. $3,000 in sponsorship.'; } S.happy-=1; return 'Posted it. Few views.'; }},
+    {l:'Sell it', sell:true, f:()=>{ S.cash+=350; return 'Sold the guitar for $350.'; }}]},
+  watch: {n:'Watch', price:2000, upkeep:0, uses:[
+    {l:'Wear it to a meeting', f:()=>{ S.charm+=2; return 'Clients noticed the watch.'; }},
+    {l:'Pawn it', sell:true, f:()=>{ S.cash+=1400; return 'Pawned the watch for $1,400.'; }}]},
+  home: {n:'Starter home', price:350000, upkeep:6000, uses:[
+    {l:'Rent out a room', f:()=>{ S.cash+=9000; return 'Rented a room for the year. $9,000.'; }},
+    {l:'Host a dinner', f:()=>{ S.cash-=250; S.happy+=4; S.charm+=1; return 'Hosted friends. $250 in groceries.'; }},
+    {l:'Sell it', sell:true, f:()=>{ const t=Math.round(350000*R(0.92,1.18)); S.cash+=t; return `Sold the house for ${money(t)}.`; }}]},
+  boat: {n:'Used sailboat', price:25000, upkeep:2000, uses:[
+    {l:'Charter a day trip', f:()=>{ S.cash+=1200; S.happy+=3; return 'Took paying guests out for the day. $1,200.'; }},
+    {l:'Sell it', sell:true, f:()=>{ S.cash+=20000; return 'Sold the sailboat for $20,000.'; }}]}
+};
+
+// Activities: cost, effect. Each takes one action point.
+// 100 more activities. Fields: name, cost, effects. h=health, ha=happy, s=smarts, l=looks, c=charm, $=cash.
+const KEY={h:'health',ha:'happy',s:'smarts',l:'looks',c:'charm'};
+function mk(n,cost,e){ return {n,cost,run:()=>{ for(const k in e){ if(k==='$') S.cash+=e[k]; else S[KEY[k]]+=e[k]; } return `Done: ${n.toLowerCase()}.`; }}; }
+const ACTS_MORE = [
+  ['Board game night',0,{ha:2,c:1}],['Trivia night',15,{s:1,ha:2,c:1}],['Karaoke night',30,{ha:3,c:1}],['Stand-up comedy show',40,{ha:3}],['Concert tickets',120,{ha:5}],
+  ['Theater play',90,{ha:4,c:1}],['Movie night at home',25,{ha:2}],['Movie premiere',30,{ha:3}],['Museum visit',25,{s:1,ha:2}],['Aquarium day',40,{ha:3}],
+  ['Zoo day',35,{ha:2}],['Amusement park',120,{ha:5}],['Go to a sports game',90,{ha:4,c:1}],['Watch a live race',150,{ha:4}],['Wine tasting',75,{ha:3,c:1}],
+  ['Brewery tour',40,{ha:3,c:1}],['Farmers market trip',60,{ha:1,h:1}],['Local festival',40,{ha:3}],['Hot air balloon ride',300,{ha:6}],['Hiking day trip',0,{h:2,ha:2}],
+  ['Camping weekend',150,{h:2,ha:4}],['Beach day',0,{h:1,ha:2}],['Ski weekend',900,{h:1,ha:6}],['Weekend city break',600,{ha:7}],['Two-week trip abroad',3500,{ha:12,s:1}],
+  ['Cruise',2500,{ha:9}],['Road trip with friends',200,{ha:5}],['Visit family',0,{ha:3}],['Family reunion',400,{ha:4,c:1}],['Attend a wedding',150,{ha:3,c:1}],
+  ['Host a housewarming',200,{ha:4,c:1}],['Attend a funeral',0,{ha:-6}],['Mentor a junior coworker',0,{ha:2,c:2,s:1}],['Volunteer at a shelter',0,{ha:3,c:1}],['Coach a kids team',0,{ha:3,c:2}],
+  ['Donate blood',0,{ha:2,h:-1}],['Join a book club',80,{s:1,c:1,ha:2}],['Read a novel',15,{s:1,ha:2}],['Audiobook on your commute',20,{s:1}],['Take an online course',300,{s:2}],
+  ['Public speaking workshop',350,{c:3,s:1}],['Debate club',0,{c:2,s:1}],['Attend an industry conference',800,{s:2,c:2}],['Join a professional association',200,{c:2}],['Lunch with a mentor',40,{c:2,s:1}],
+  ['Networking mixer',60,{c:2}],['Attend a city council meeting',0,{s:1,c:1}],['Community garden day',0,{h:1,ha:2,c:1}],['Spa day',200,{h:2,ha:5,l:1}],['Massage',120,{h:2,ha:3}],
+  ['Meditation retreat',500,{h:2,ha:4}],['Skincare routine',80,{l:2}],['New haircut',60,{l:2}],['New wardrobe refresh',500,{l:3,c:1}],['Get a tattoo',350,{ha:3,l:1}],
+  ['Adopt a dog',600,{ha:4,h:1}],['Buy a fish tank',150,{ha:2}],['Garden planting',200,{h:1,ha:3}],['Home deep clean',0,{ha:2}],['Weekend DIY project',150,{ha:2,s:1}],
+  ['Review your budget',0,{s:1}],['Organize your finances',0,{s:1,ha:1}],['Negotiate a bill',0,{'$':180,s:1}],['Cancel unused subscriptions',0,{'$':120}],['Apply for scholarships',0,{s:1,'$':500}],
+  ['Organize a clothing swap',0,{ha:2,c:1,'$':60}],['Garage sale',0,{'$':350}],['Pet sitting gig',0,{'$':200,ha:1}],['Dog walking gig',0,{'$':150,h:1}],['Tutor a student',0,{'$':250,s:1}],
+  ['Babysit for neighbors',0,{'$':120,ha:1}],['Freelance side gig',0,{'$':400,s:1}],['Rent out your parking space',0,{'$':150}],['Stock club meeting',0,{s:2,c:1}],['Attend a finance seminar',100,{s:2}],
+  ['Bowling night',40,{ha:3,c:1}],['Mini golf',30,{ha:3}],['Ice skating',40,{ha:3,h:1}],['Sailing lesson',500,{ha:3,s:1}],['Surf lesson',250,{h:2,ha:3}],
+  ['Skydiving',400,{ha:6,c:1}],['Charity 5K',50,{h:2,ha:3,c:1}],['Golf weekend',220,{h:1,ha:3,c:2}],['Tennis club membership',300,{h:2,ha:2,c:1}],['Rec league softball',150,{h:2,ha:3,c:1}],
+  ['Phone a family member',0,{ha:2}],['Send a thank-you note',0,{c:1,ha:1}],['Dinner party with friends',0,{ha:3,c:1}],['Stargazing trip',0,{ha:3,s:1}],['Bird watching',0,{ha:2,s:1}],
+  ['Attend a lecture',0,{s:2}],['Watch a documentary',0,{s:1,ha:1}],['Read the news for an hour',0,{s:1}],['Sleep in on Sunday',0,{h:3,ha:2}],['Cold plunge',60,{h:1,ha:2}],
+  ['Long weekend fishing',80,{h:1,ha:3}],['Family game night',0,{ha:3,c:1}],['Take a day off',0,{h:2,ha:3}],['Start a side hustle',300,{'$':400,s:1}],['Plant a tree at the park',0,{ha:2,h:1}]
+].map(([n,cost,e])=>mk(n,cost,e));
+
+// 100 more activities.
+const ACTS_MORE2 = [
+  ['Botanical garden visit',30,{ha:3,s:1}],['Apple picking at an orchard',25,{ha:3,h:1}],['Pumpkin patch day',20,{ha:3}],['Holiday market',30,{ha:3,c:1}],['Magic show',60,{ha:4}],
+  ['Escape room',35,{ha:4,c:1}],['Laser tag',30,{ha:4}],['Go-kart racing',40,{ha:4}],['Paintball afternoon',60,{ha:4,h:1}],['Arcade night',25,{ha:3}],
+  ['Comedy club open mic',25,{ha:2,c:1}],['Drive-in movie',30,{ha:3,c:1}],['Antique shopping',40,{ha:2,s:1}],['Thrift shopping',30,{ha:2,l:1}],['Shopping spree',300,{ha:4,l:1}],
+  ['Hot springs weekend',400,{h:2,ha:6}],['Wine country weekend',700,{ha:7,c:1}],['Lake house weekend',300,{ha:5,h:1}],['Cabin in the woods',250,{ha:5,h:1}],['Houseboat rental',800,{ha:7}],
+  ['Snorkeling trip',200,{ha:5,h:1}],['Scuba certification course',500,{s:3,ha:3}],['Whale watching tour',120,{ha:5,s:1}],['Safari trip',4000,{ha:12,s:2}],['Northern lights trip',1500,{ha:9,s:1}],
+  ['Cross-country train trip',800,{ha:7,s:1}],['Volunteer abroad week',1200,{ha:6,s:2,c:2}],['Summer study abroad',3000,{s:4,c:2,ha:6}],['Cultural festival',40,{ha:3,c:1}],['Rodeo weekend',60,{ha:4}],
+  ['County fair',25,{ha:3}],['Parade watching',0,{ha:2}],['Fireworks show',0,{ha:3}],['New Year party',80,{ha:4,c:1}],['Speed dating night',40,{c:3,ha:2}],
+  ['Singles mixer',50,{c:3}],['Blind date dinner',120,{c:2,ha:3}],['Couples getaway',700,{ha:8,c:2}],['Anniversary dinner',180,{ha:5,c:1}],['Marriage counseling session',200,{ha:4,s:1}],
+  ['Parenting class',150,{s:2,ha:1}],['Kids birthday party',250,{ha:4,c:1}],['Family photo session',300,{ha:3,l:2}],['Surprise party for a friend',100,{ha:3,c:1}],['Attend a town hall',0,{s:1,c:1}],
+  ['Register to vote',0,{s:1}],['Serve on jury duty',0,{s:2,ha:-2}],['Join a neighborhood watch',0,{c:2,ha:2}],['Fix a leaky faucet',40,{s:1,ha:1}],['Basic car maintenance class',60,{s:2}],
+  ['Build a bookshelf',120,{ha:2,s:1}],['Repaint a room',150,{ha:2,l:1}],['Build a compost bin',40,{h:1,ha:1}],['Set up a home network',150,{s:2}],['Digital cleanup weekend',0,{s:1,ha:1}],
+  ['Tech meetup',0,{s:2,c:2}],['First-aid course',80,{s:2,h:1}],['Renew your passport',150,{ha:1,s:1}],['Motorcycle safety course',300,{s:2,ha:2}],['Test drive a luxury car',0,{ha:2,l:1}],
+  ['Estate sale hunting',30,{ha:2,s:1}],['Listen to a history podcast',0,{s:1}],['Watch a Senate hearing',0,{s:1}],['Visit a courthouse',0,{s:2}],['Tour a factory',0,{s:2}],
+  ['Tour a hospital',0,{s:1,c:1}],['Shadow a professional',0,{s:2,c:2}],['Informational interview',0,{c:2,s:1}],['Career fair',0,{c:2,s:1}],['Resume review service',80,{c:2}],
+  ['Mock job interview',60,{c:2,s:1}],['Apply for a grant',0,{s:1,'$':800}],['Crowdfund a project',0,{'$':500,c:1}],['Sell a car privately',0,{'$':1500}],['Refinance a loan',0,{'$':300,s:1}],
+  ['Open a retirement account',0,{s:2}],['Get a financial checkup',0,{s:2}],['Gift a friend',80,{ha:3,c:1}],['Host a game tournament',60,{ha:3,c:2}],['Pet adoption fair',0,{ha:3}],
+  ['Foster a dog',0,{ha:4}],['Animal shelter fundraiser',100,{ha:3,c:2}],['Beach cleanup',0,{ha:3,h:1,c:1}],['Recycling drive',0,{ha:2,c:1}],['Tree planting day',0,{ha:2,h:1}],
+  ['Bike to work day',0,{h:2,ha:2}],['Sunrise walk by the water',0,{h:1,ha:3}],['Sunset picnic',40,{ha:4}],['Campfire night',0,{ha:3,c:1}],['Ghost tour',35,{ha:4,s:1}],
+  ['Attend a trade show',200,{c:3,s:1}],['Sponsor a local team',500,{c:3,ha:2}],['Host a dinner for investors',400,{c:3,ha:2}],['Sell at a craft market',80,{'$':350,c:1}],['Lemonade stand',10,{'$':80,ha:1}],
+  ['Clean out the attic',0,{ha:1,'$':60}],['Sell old electronics',0,{'$':200}],['Car wash fundraiser',0,{'$':180,c:1}],['Online survey gig',0,{'$':40}],['Mystery shopper gig',0,{'$':90,s:1}]
+].map(([n,cost,e])=>mk(n,cost,e));
+
+// Financial and life-management actions.
+const ACTS_NEW = [
+  {n:'Contribute to retirement account ($2,000)', cost:2000, run:()=>{ S.retire+=2000; return 'Put $2,000 into your retirement account.'; }},
+  {n:'Buy a health plan', cost:0, run:()=>{ if(S.insured) return 'You already have a health plan.'; S.insured=true; return 'Enrolled in a health plan. Premiums are about $6,000 a year.'; }},
+  {n:'Take a student loan ($20,000)', cost:0, run:()=>{ if(S.credit<600) return 'Your credit score is too low for a loan.'; S.cash+=20000; S.debt+=20000; return 'Borrowed $20,000 for school.'; }},
+  {n:'Move to a new city ($2,000)', cost:2000, run:()=>{ S.city=(S.city+1)%CITIES.length; return `Moved to ${CITIES[S.city].n}.`; }},
+  {n:'Check your credit report', cost:0, run:()=>`Your credit score is ${S.credit}.`}
+];
+// 100 real-life actions. Each is one action in the Activities tab. Effects: h, ha, s, l, c = stats; cr = credit; rt = retirement; sv = savings; $ = cash.
+const KEY2={h:'health',ha:'happy',s:'smarts',l:'looks',c:'charm',cr:'credit',rt:'retire',sv:'savings'};
+function mk2(n,cost,e){ return {n,cost,run:()=>{ for(const k in e){ if(k==='$') S.cash+=e[k]; else S[KEY2[k]]+=e[k]; } return `Done: ${n.toLowerCase()}.`; }}; }
+const ACTS_REAL = [
+  ['Open a high-yield savings account',100,{sv:500,cr:2}],['Set up automatic bill pay',0,{cr:4,s:1}],['Compare car insurance quotes',0,{'$':150,s:1}],['Switch phone plan',0,{'$':600}],['Negotiate a cable bill',0,{'$':240}],
+  ['Build an emergency fund',1000,{sv:1000,ha:2}],['Track spending for a month',0,{s:2,'$':200}],['Buy in bulk at a warehouse club',300,{h:1,'$':100}],['Use a cash-back credit card',0,{'$':300,cr:2}],['Request a credit limit increase',0,{cr:4}],
+  ['Dispute a billing error',0,{'$':120,s:1}],['Get a free credit report',0,{cr:1}],['File your taxes early',0,{'$':200,s:1}],['Claim a tax credit',0,{'$':350}],['Open a 529 education savings plan',200,{sv:200,s:1}],
+  ['Max out your employer match',0,{rt:1000}],['Refinance a student loan',0,{cr:3,'$':200}],['Consolidate high-interest debt',0,{cr:6,ha:2}],['Negotiate a rent increase',0,{'$':300}],['Sell unused gift cards',0,{'$':60}],
+  ['Rent out a storage spot',0,{'$':200}],['Return unused items for refunds',0,{'$':90}],['Use a coupon stack at the store',0,{'$':60,ha:1}],['Price-compare before a big purchase',0,{'$':200,s:1}],['Buy a used laptop instead of new',0,{'$':500,s:1}],
+  ['Pack lunch all week',40,{'$':150,h:1}],['Skip a month of takeout',0,{'$':200,h:1}],['Carpool to work',0,{'$':180,h:1}],['Buy a transit pass',400,{'$':600,h:1}],['Sell a timeshare',0,{'$':1200}],
+  ['Attend a financial literacy class',0,{s:3}],['Join a credit union',50,{cr:3,ha:1}],['Get a second opinion on insurance',0,{'$':300,s:1}],['Buy renters insurance',240,{ha:2,cr:1}],['Buy life insurance',600,{ha:3,cr:1}],
+  ['Buy home insurance',1200,{ha:2}],['Make a will',300,{ha:4,s:1}],['Set up a trust',1500,{ha:4,s:2}],['Name a beneficiary',0,{s:1}],['Create a monthly budget sheet',0,{s:2}],
+  ['Declutter the house',0,{ha:3,'$':80}],['Sell old furniture',0,{'$':150}],['Replace smoke detector batteries',10,{s:1}],['Clean the gutters',120,{h:1}],['Hire a plumber for a leak',350,{ha:2}],
+  ['Get the car inspected',60,{s:1}],['Rotate the car tires',80,{s:1}],['Change the furnace filter',25,{h:1}],['Deep clean the carpets',150,{ha:3}],['Upgrade smart home devices',400,{ha:3,s:1}],
+  ['Install a home security system',600,{ha:4,cr:1}],['Replace the roof shingles',8000,{ha:2}],['Repaint the exterior',3000,{ha:3,l:1}],['Landscape the front yard',1200,{ha:4,l:2}],['Hire a moving company',1000,{ha:-2,h:1}],
+  ['Organize the garage',0,{ha:2}],['Set up a home office',600,{s:2,ha:1}],['Buy a new mattress',900,{h:3}],['Get new bedding',120,{h:1,ha:1}],['Replace worn shoes',80,{l:1}],
+  ['Mail a birthday card',5,{ha:1,c:1}],['Send a holiday gift basket',60,{ha:3,c:1}],['Help a friend move',0,{ha:2,c:1}],['Babysit for a friend',0,{'$':60,c:1}],['Join a community board',0,{c:3}],
+  ['Volunteer at a polling station',0,{s:1,c:2}],['Referee a youth league game',0,{c:2,ha:2,'$':150}],['Attend a school board meeting',0,{s:2}],['Sign a petition',0,{s:1}],['Attend a jury orientation',0,{s:1}],
+  ['Join the local library',20,{s:2,ha:2}],['Get a library card',0,{s:1}],['Visit a local historical society',0,{s:2,ha:2}],['Do a neighborhood cleanup',0,{ha:2,c:2}],['Host a block party',200,{ha:5,c:3}],
+  ['Organize a carpool group',0,{c:2,'$':80}],['Refer a friend for a job',0,{c:2,'$':100}],['Recommend a friend for a job',0,{c:3}],['Stand up for a coworker',0,{c:2,ha:1}],['Apologize to a friend',0,{ha:2,c:1}],
+  ['Reconnect with a high school friend',0,{ha:3,c:1}],['Attend a homeowners association meeting',0,{s:1,c:1}],['Plan a family vacation',0,{ha:3,s:1}],['Take the family on a day trip',80,{ha:5}],['Hire a babysitter for date night',120,{c:2,ha:4}],
+  ['Buy flowers for a partner',40,{ha:3,c:1}],['Plan a weekend staycation',150,{ha:4}],['Take a long walk with a friend',0,{h:1,ha:2}],['Call your grandparents',0,{ha:3}],['Visit a grave',0,{ha:-2,c:1}],
+  ['Update your resume',0,{c:2,s:1}],['Get a professional certification',500,{s:3,c:2}],['Attend a job fair',0,{c:2}],['Ask a senior colleague to mentor you',0,{c:2,s:1}],['Learn a new office software tool',0,{s:2}],
+  ['Shadow a coworker for a week',0,{s:2,c:1}],['Take on a leadership project',0,{c:3,ha:-1,'$':200}],['Request a transfer',0,{s:1,ha:2}],['Work from home for a week',0,{ha:3,'$':200}],['Take unpaid leave',0,{h:3,ha:4,'$':-800}]
+].map(([n,cost,e])=>mk2(n,cost,e));
+
+// More real-life actions (batch 2 of 5). Same effect keys as before.
+const ACTS_REAL2 = [
+  ['Book a flight for a holiday',450,{ha:6}],['Renew a driver license',40,{s:1}],['Get a passport photo taken',15,{ha:1}],['Apply for a visa',160,{s:1,ha:1}],['Buy travel insurance',80,{ha:2,cr:1}],
+  ['Pack a carry-on only trip',0,{s:1,'$':60}],['Use an airport lounge pass',50,{ha:3}],['Rent a car for a weekend',200,{ha:3}],['Book a train seat early',0,{'$':80}],['Take a red-eye flight',0,{h:-2,'$':60}],
+  ['Visit a national park',60,{ha:5,h:1}],['Hire a travel agent',200,{ha:3,s:1}],['Attend a destination wedding',1500,{ha:5,c:2}],['Take a city bike tour',60,{ha:4,s:1}],['Stay at a bed and breakfast',220,{ha:4}],
+  ['Compare prices online',0,{'$':120,s:1}],['Buy an appliance warranty',150,{ha:1,cr:1}],['Return a damaged item',0,{'$':70}],['Join a loyalty program',0,{'$':50}],['Use rewards points on a purchase',0,{'$':120,ha:1}],
+  ['Buy a secondhand bicycle',200,{h:1,ha:2}],['Buy a winter coat',200,{ha:2,l:1}],['Buy a suit for a job interview',500,{c:3,l:2}],['Replace a broken phone',800,{ha:2,c:1}],['Upgrade your TV',1200,{ha:4}],
+  ['Buy paper goods in bulk',40,{ha:1}],['Sell old clothes at a consignment shop',0,{'$':180}],['Buy the generic brand instead',0,{'$':100}],['Cancel an unused membership',0,{'$':300,ha:1}],['Stop buying coffee out',0,{'$':200,h:1}],
+  ['Set up a family chore chart',0,{c:1,s:1}],['Child-proof the house',250,{ha:2}],['Enroll a child in summer camp',800,{ha:3,s:2}],['Pay for a school trip',120,{ha:2}],['Buy a school uniform',90,{ha:1}],
+  ['Attend a parent-teacher conference',0,{s:2,c:1}],['Set up a college fund for kids',300,{sv:300,s:1}],['Teach your kids to save money',0,{s:2,c:2}],['Take a family photo',0,{ha:2}],['Plan a birthday party for a child',250,{ha:4,c:1}],
+  ['Send a sympathy card',10,{c:1}],['Attend a retirement party',60,{c:2,ha:2}],['Attend a graduation ceremony',50,{ha:3,c:1}],['Visit an old mentor',0,{ha:2,c:2}],['Start a group chat for old classmates',0,{c:2,ha:1}],
+  ['Organize a reunion dinner',150,{ha:4,c:2}],['Host a game night at your place',0,{ha:3,c:1}],['Go to a housewarming party',40,{ha:2,c:1}],['Send a thank you gift',40,{c:2,ha:1}],['Mediate a dispute between friends',0,{c:2,s:1,ha:-1}],
+  ['Attend a company retreat',400,{c:3,ha:2}],['Take a sabbatical week',0,{ha:4,h:2,'$':-600}],['Negotiate a signing bonus',0,{'$':2000,c:1}],['Accept a counteroffer',0,{'$':3000}],['Join a union',50,{c:2,s:1}],
+  ['Start a professional network group',0,{c:3}],['Speak at a local meetup',0,{c:3,s:1}],['Earn a sales award',0,{c:2,'$':500}],['Pitch an idea to your boss',0,{c:2,s:1}],['Take a team lunch',40,{c:2,ha:2}],
+  ['Change careers',600,{s:4,c:2}],['Take an aptitude test',40,{s:2}],['Get a job reference letter',0,{c:2}],['Quit a toxic job',0,{ha:6,'$':-1000}],['Set up a freelance profile',50,{c:2,'$':200}],
+  ['Buy a rental property',60000,{cr:2,ha:-1}],['Sell a rental property',0,{'$':15000}],['Buy a vacant lot',20000,{ha:1}],['Pay property taxes',3000,{ha:-1}],['Appeal a property tax bill',0,{'$':500,s:1}],
+  ['Reroof a rental unit',8000,{cr:1}],['Evict a bad tenant',1500,{ha:-4}],['Find a new tenant',0,{'$':1200}],['Get a home appraisal',400,{s:1}],['Refinance a mortgage',0,{'$':2000,cr:2}],
+  ['Pay off a car loan',0,{cr:4,ha:3}],['Close an old credit card',0,{cr:-2}],['Open a checking account',0,{cr:2}],['Compare mortgage rates',0,{s:2,'$':500}],['Make an extra mortgage payment',1000,{cr:3,ha:1}],
+  ['Take a mental health day',0,{ha:5,h:2,'$':-200}],['Keep a daily gratitude habit',0,{ha:3}],['Turn off notifications for a week',0,{ha:4,s:1}],['Limit screen time',0,{ha:3,s:1}],['Plan a digital detox weekend',0,{ha:5,h:1}],
+  ['Take a nap at lunch',0,{h:2}],['Reset your sleep schedule',0,{h:3}],['Buy a massage chair',1200,{h:2,ha:3}],['Visit a sauna',40,{h:2,ha:3}],['Join a support group',0,{ha:4,c:1}],
+  ['Attend a city budget hearing',0,{s:2}],['Run for a neighborhood board',0,{c:3,s:1}],['Donate old books to the library',0,{ha:2,c:1}],['Adopt a highway for cleanup',0,{ha:2,c:2}],['Sign up to be a poll worker',0,{s:1,c:2}],
+  ['Report a pothole',0,{s:1}],['Check your voter registration',0,{s:1}],['Visit a state capitol',0,{s:2,ha:2}],['Attend a naturalization ceremony',0,{ha:4,s:1}],['Start a neighborhood email list',0,{c:2,s:1}]
+].map(([n,cost,e])=>mk2(n,cost,e));
+
+// More real-life actions (next batch of 100).
+const ACTS_REAL3 = [
+  ['Get an oil change',70,{s:1}],['Replace windshield wipers',30,{h:1}],['Buy a car seat for a child',180,{ha:2}],['Register a new car',200,{s:1}],['Pay parking tickets',120,{ha:-2}],
+  ['Take an e-bike to work',900,{h:2,'$':200}],['Sell a motorcycle',0,{'$':2500}],['Rent a moving truck',120,{ha:1}],['Join a carsharing service',100,{'$':150,h:1}],['Take a parallel parking lesson',80,{s:1,c:1}],
+  ['Upgrade your internet plan',70,{ha:2,s:1}],['Buy a backup drive',120,{s:1}],['Set up a password manager',0,{s:2}],['Turn on two-factor login',0,{s:2}],['Replace a dead laptop battery',150,{ha:1}],
+  ['Buy a streaming bundle',30,{ha:3}],['Cancel a streaming service',0,{'$':60}],['Buy a home printer',150,{s:1}],['Install a Wi-Fi extender',80,{ha:1}],['Set up a family photo backup',0,{s:1}],
+  ['Go on a scenic drive',40,{ha:3}],['Watch the sunrise at the coast',0,{ha:4}],['Visit a lighthouse',15,{ha:3,s:1}],['Go to a lakeside picnic',30,{ha:3}],['Pick wildflowers in a meadow',0,{ha:2}],
+  ['Go birdwatching at a wetland',0,{ha:2,s:1}],['Join a beach volunteer day',0,{ha:3,c:1}],['Go whitewater rafting',200,{ha:6,c:1}],['Take a canoe trip',100,{ha:4,s:1}],['Visit a waterfall',0,{ha:3}],
+  ['Try a new restaurant',60,{ha:3}],['Take out for friends',80,{ha:2,c:1}],['Subscribe to a meal delivery service',250,{h:1,'$':-100}],['Buy groceries in bulk',200,{h:1}],['Switch to store-brand groceries',0,{'$':120}],
+  ['Get a grocery rewards card',0,{'$':60}],['Plant a window herb box',20,{ha:2}],['Hire a house cleaner',150,{ha:3,h:1}],['Buy a robot vacuum',300,{ha:2,s:1}],['Organize the pantry',0,{ha:2}],
+  ['Forgive a family loan',1500,{ha:4,c:2}],['Host a sleepover for kids',60,{ha:3,c:1}],['Take grandparents to lunch',80,{ha:4,c:1}],['Attend a christening',80,{ha:3,c:1}],['Give a surprise gift to a partner',150,{ha:4,c:1}],
+  ['Plan an anniversary weekend',600,{ha:6,c:2}],['Renew wedding vows',400,{ha:5,c:1}],['Adopt a cat',300,{ha:3}],['Take the kids to a library reading hour',0,{ha:2,s:1}],['Set up a family emergency plan',0,{s:2,ha:1}],
+  ['Take a public speaking club course',50,{c:2,s:1}],['Take a negotiation seminar',250,{c:2,'$':300}],['Attend a sales training',300,{c:2,s:1,'$':200}],['Get a notary commission',150,{c:2,'$':200}],['Get a forklift certificate',200,{s:2,'$':300}],
+  ['Join a trade association',120,{c:2}],['Complete a safety training course',0,{s:2}],['Ask for a flexible schedule',0,{ha:3}],['Propose a side project to your team',0,{c:2,'$':250}],['Volunteer as an interview panelist',0,{c:2,s:1}],
+  ['Review your insurance policies',0,{cr:1,s:1}],['Set a monthly savings target',0,{sv:200,s:1}],['Start a sinking fund for repairs',300,{sv:300}],['Pay a bill early for a discount',0,{'$':40}],['Buy a certificate of deposit',1000,{sv:1000}],
+  ['Invest in an index fund',1000,{rt:500,s:1}],['Roll over an old retirement account',0,{rt:800,s:2}],['Change your tax withholding',0,{'$':150}],['Take a financial planning session',250,{s:3}],['Plan a major purchase in advance',0,{s:2,'$':100}],
+  ['Attend a public library lecture',0,{s:2}],['Join a neighborhood association',0,{c:2,ha:2}],['Help a local food bank',0,{ha:3,c:1}],['Vote in a local election',0,{s:1,c:1}],['Sponsor a child in need',40,{ha:4,c:1}],
+  ['Donate to a disaster relief fund',300,{ha:4}],['Join a city cleanup crew',0,{ha:2,c:2}],['Attend a city council budget vote',0,{s:2}],['Volunteer for a school fundraiser',0,{ha:2,c:2}],['Tend a community garden plot',40,{ha:3,c:1}],
+  ['Take a spa day alone',150,{ha:5}],['Go to bed early for a week',0,{h:3}],['Take a solo weekend trip',300,{ha:6}],['Schedule a quiet afternoon',0,{ha:3}],['Go on a phone-free vacation',0,{ha:4,h:1}],
+  ['Sit in a meditation circle',0,{ha:3,s:1}],['Take a long bath',0,{ha:2,h:1}],['Sign up for a retreat weekend',400,{ha:5,c:1}],['Visit a mineral spring',60,{ha:3,h:1}],['Give yourself a weekly rest day',0,{h:2,ha:2}],
+  ['Go to a farmers flea market',20,{ha:2,'$':40}],['Attend a trivia tournament',40,{ha:3,s:1}],['Go to a comedy festival',60,{ha:4}],['Try an escape room with coworkers',60,{ha:3,c:2}],['Go ice fishing',60,{ha:3,h:1}],
+  ['Attend a local parade',0,{ha:2,c:1}],['Visit a historic house tour',25,{ha:3,s:1}],['Join a neighborhood picnic',0,{ha:3,c:2}],['Go to a minor league game',35,{ha:4,c:1}],['Take a boat ride on the lake',80,{ha:4}]
+].map(([n,cost,e])=>mk2(n,cost,e));
+
+// Next batch of real-life actions.
+const ACTS_REAL4 = [
+  ['Get a home energy audit',150,{s:2,ha:1}],['Switch to LED bulbs',40,{'$':60}],['Install a programmable thermostat',180,{'$':120,s:1}],['Seal drafty windows',200,{'$':90,h:1}],['Get a home warranty plan',400,{ha:2,cr:1}],
+  ['Test your home for water leaks',0,{s:1}],['Clean out the dryer vent',0,{ha:1}],['Replace a worn door lock',120,{ha:2}],['Buy a kitchen fire extinguisher',30,{ha:1}],['Trim the hedges',0,{ha:2}],
+  ['Reseal the driveway',300,{ha:2,l:1}],['Store seasonal clothes',40,{ha:1}],['Donate winter clothes',0,{ha:2,c:1}],['Sell your old phone',0,{'$':250}],['Trade in a game console for credit',0,{'$':150}],
+  ['Set up a shared family calendar',0,{s:1,c:1}],['Hold a family budget meeting',0,{s:2,c:1}],['Hire a tutor for your child',300,{s:3}],['Enroll a kid in science camp',600,{s:3,ha:2}],['Open a first bank account for a teen',0,{s:2,cr:2}],
+  ['Teach a teen to drive',0,{s:2,ha:2}],['Pay for driver education',400,{s:2}],['Get a teen a summer job',0,{'$':200,c:1}],['Buy a used sofa',250,{ha:2}],['Get a new dining table',600,{ha:2}],
+  ['Hang curtains',80,{ha:1}],['Build a shelf from a kit',70,{ha:2,s:1}],['Set up a home reading corner',120,{ha:3,s:1}],['Give a house tour to guests',0,{ha:2,c:1}],['Host a book swap',0,{ha:2,c:2}],
+  ['Hire a dog walker for a week',200,{ha:2}],['Board a pet while on vacation',300,{ha:2}],['Take a pet to the groomer',70,{ha:2,l:1}],['Get pet insurance',500,{ha:2,cr:1}],['Adopt a rescue rabbit',200,{ha:3}],
+  ['Set up a neighborhood pet swap',0,{c:2,ha:1}],['Set a retirement savings target',0,{s:2,rt:200}],['Max out a Roth account',6000,{rt:6000}],['Talk to a retirement planner',0,{s:2}],['Build a six-month cash reserve',5000,{sv:5000,s:1}],
+  ['Cut the cable TV package',0,{'$':900}],['Switch to a no-fee credit card',0,{cr:3,'$':100}],['Ask for a lower interest rate',0,{cr:2,'$':250}],['Check your bank for hidden fees',0,{'$':80,s:1}],['Review a lease before signing',0,{s:2,'$':100}],
+  ['Negotiate a moving discount',0,{'$':120,s:1}],['Sell your timeshare points',0,{'$':800}],['Take a day trip to a museum',30,{ha:3,s:1}],['Visit an observatory',20,{ha:3,s:2}],['Take a boat safety course',80,{s:2,ha:1}],
+  ['Visit an aquarium with the kids',40,{ha:3,c:1}],['Go to a planetarium show',25,{ha:3,s:1}],['Visit a science center',30,{ha:3,s:2}],['Tour a candy factory',25,{ha:3,s:1}],['Attend a regional fair',40,{ha:3,c:1}],
+  ['Watch the stars from a rooftop',0,{ha:3,s:1}],['Go to a neighborhood block sale',0,{'$':60,c:1}],['Visit a local farm stand',20,{ha:2,h:1}],['Join a farm share program',300,{h:2}],['Take a remote work course',200,{s:2,c:1}],
+  ['Take a time-management course',150,{s:2}],['Attend a leadership retreat',500,{c:3,s:1}],['Earn a team award',0,{c:2,'$':400}],['Ask for a title change',0,{c:2,ha:2}],['Prepare for a performance review',0,{s:2,c:1}],
+  ['Write a self-review at work',0,{s:1,c:1}],['Start a mentorship program at work',0,{c:3,s:1}],['Claim a workplace wellness stipend',0,{'$':300,ha:2}],['Turn down overtime',0,{ha:4,'$':-200}],['Build a professional website',300,{c:3}],
+  ['Attend an industry webinar',0,{s:2}],['Take a leadership assessment',80,{s:2,c:1}],['Serve on a jury again',0,{s:1,ha:-1}],['Attend a public hearing on zoning',0,{s:2}],['Join a local business council',0,{c:3,s:1}],
+  ['Support a local candidate',50,{c:2,s:1}],['Attend a candidate forum',0,{s:2,c:1}],['Register a business name',150,{s:1}],['Get a business license',250,{s:1}],['Attend a small business workshop',80,{s:2,c:1}],
+  ['Apply for a small business grant',0,{'$':1000,s:1}],['Join a chamber of commerce',300,{c:3}],['Make a friend at a trivia night',0,{c:2,ha:2}],['Join a board game club',50,{c:2,ha:2}],['Organize a park picnic',40,{ha:3,c:1}],
+  ['Host a backyard movie night',40,{ha:3,c:1}],['Start a book exchange with neighbors',0,{c:2,ha:2}],['Invite a neighbor for coffee',10,{c:2,ha:2}],['Visit a sick friend',0,{ha:2,c:2}],['Send flowers to a friend',40,{ha:3,c:1}],
+  ['Surprise a friend with a visit',150,{ha:4,c:2}],['Attend a cousin wedding',600,{ha:4,c:2}],['Take a half-day off',0,{h:2,ha:3}],['Block your calendar for focus time',0,{s:2}],['Declutter your digital inbox',0,{ha:2,s:1}],
+  ['Take a short walk after lunch',0,{h:1,ha:2}],['Take a long weekend',400,{ha:6,h:2}]
+].map(([n,cost,e])=>mk2(n,cost,e));
+
+// Next batch of real-life actions.
+const ACTS_REAL5 = [
+  ['Plant a fruit tree',80,{ha:2,h:1}],['Mulch the flower beds',60,{ha:2}],['Install a rain barrel',120,{'$':40,s:1}],['Clean the window screens',0,{h:1}],['Replace the bathroom caulk',30,{ha:1}],
+  ['Refinish a wood door',150,{ha:2,l:1}],['Fix a squeaky stair',40,{ha:1}],['Install a ceiling fan',180,{h:1,'$':60}],['Bleed the radiators',0,{s:1}],['Winterize the outdoor faucets',20,{s:1}],
+  ['Get the car detailed',120,{l:1,ha:2}],['Check tire pressure monthly',0,{s:1}],['Replace the cabin air filter',40,{h:1}],['Buy a roadside assistance plan',90,{ha:2,cr:1}],['Compare auto loan rates',0,{s:2,'$':300}],
+  ['Lease a car instead of buying',0,{'$':500,cr:1}],['Sell an old boat trailer',0,{'$':400}],['Find a cheaper parking garage',0,{'$':150}],['Get a car wash membership',80,{ha:1}],['Take a driving refresher course',60,{s:1,ha:1}],
+  ['Set up a family screen-time plan',0,{ha:2,s:1}],['Back up your phone',0,{s:1}],['Buy a smartwatch',300,{ha:2,h:1}],['Set up a home security camera',200,{ha:3,s:1}],['Remove old apps from your phone',0,{ha:2}],
+  ['Update your computer software',0,{s:1}],['Buy a noise-canceling headset',250,{ha:3}],['Sign up for a news subscription',80,{s:2,ha:1}],['Run a password audit',0,{s:2}],['Unsubscribe from marketing emails',0,{ha:2,'$':60}],
+  ['Book a last-minute getaway',500,{ha:6}],['Take a ferry crossing',40,{ha:3}],['Ride a scenic railway',60,{ha:4}],['Stay in a lakefront cabin',400,{ha:5}],['Walk through a historic city centre',0,{ha:3,s:1}],
+  ['Take a cross-border day trip',80,{ha:4,s:1}],['Use a travel rewards card',0,{'$':200,cr:2}],['Buy a packing organizer',40,{ha:1}],['Get an international driving permit',30,{s:1}],['Pre-book museum passes',50,{ha:2}],
+  ['Attend a neighborhood meeting',0,{c:2}],['Join a parent group',0,{c:2,ha:2}],['Start a carpool with coworkers',0,{'$':80,c:1}],['Lend tools to a neighbor',0,{c:2,ha:1}],['Join a rec center club',80,{c:2,ha:2}],
+  ['Attend a school open house',0,{s:1,c:1}],['Mentor a young job seeker',0,{c:2,s:1}],['Sponsor a student program',300,{c:2,ha:2}],['Donate a used car',0,{ha:3,cr:1}],['Help a neighbor with taxes',0,{'$':80,s:1}],
+  ['Set up a savings sweep',0,{sv:200,s:1}],['Use a budgeting app',0,{s:2}],['Compare bank account bonuses',0,{'$':150}],['Claim a manufacturer rebate',0,{'$':120}],['File a rebate form',0,{'$':60}],
+  ['Get a price match',0,{'$':80}],['Get a security deposit refund',0,{'$':400}],['Cancel a magazine subscription',0,{'$':40}],['Ask a bank to waive a fee',0,{'$':60,cr:1}],['Buy a home warranty for appliances',300,{ha:2}],
+  ['Attend a skills fair',0,{s:2,c:1}],['Get a technical certificate online',200,{s:3}],['Take a sales commission course',150,{c:2,'$':200}],['Pitch for a promotion',0,{c:2,'$':500}],['Ask a manager for a referral',0,{c:2}],
+  ['Practice a job interview with a friend',0,{c:2,s:1}],['Apply for a fellowship',0,{s:2,'$':2000}],['Draft a side business plan',0,{s:2}],['Take a sabbatical from your job',0,{ha:4,'$':-1500}],['Switch to part-time work',0,{ha:4,'$':-800}],
+  ['Plan a baby shower',200,{ha:4,c:2}],['Attend a bridal shower',80,{ha:3,c:1}],['Plan a retirement celebration',300,{ha:4,c:1}],['Organize a family tree project',0,{s:2,ha:2}],['Visit a childhood home',0,{ha:3,s:1}],
+  ['Take a road trip with your parents',300,{ha:6,c:1}],['Help a parent downsize',0,{ha:-1,'$':200}],['Take a grandchild to the zoo',40,{ha:4,c:1}],['Teach a child to ride a bike',0,{ha:3,s:1}],['Read a bedtime story to a kid',0,{ha:2,c:1}],
+  ['Take a sick day',0,{h:2}],['Start a stress-relief routine',0,{ha:3}],['Unplug before bed',0,{h:2,ha:2}],['Turn your bedroom into a sleep room',300,{h:3}],['Get blackout curtains',80,{h:2}],
+  ['Spend a quiet day at a library',0,{ha:3,s:1}],['Go on a silent retreat',400,{ha:5,s:1}],['Watch the sunset from a hill',0,{ha:4}],['Visit a tropical greenhouse',25,{ha:3}],['Declutter your wardrobe',0,{ha:3,'$':100}],
+  ['Track your town council votes',0,{s:2}],['Update your emergency contacts',0,{s:1,ha:1}],['Attend a veterans day ceremony',0,{ha:3,c:1}],['Volunteer at a museum front desk',0,{ha:2,c:2}],['Give a talk at a school career day',0,{c:3,s:1}],
+  ['Support a neighborhood library drive',20,{c:1,s:1}],['Attend a ballot measure briefing',0,{s:2}],['Donate to a public radio station',100,{ha:2,c:1}],['Help a neighbor with a form',0,{c:2,s:1}],['Ask a city official a question',0,{s:1,c:1}]
+].map(([n,cost,e])=>mk2(n,cost,e));
+
+const ACTS = [...ACTS_MORE, ...ACTS_MORE2, ...ACTS_NEW, ...ACTS_REAL, ...ACTS_REAL2, ...ACTS_REAL3, ...ACTS_REAL4, ...ACTS_REAL5,
+  {n:'Gym membership (1 year)', cost:600, run:()=>{ S.health+=4; S.looks+=2; return 'Committed to the gym for the year.'; }},
+  {n:'Haircut and grooming', cost:60, run:()=>{ S.looks+=2; return 'Fresh look.'; }},
+  {n:'Meal prep for the week', cost:150, run:()=>{ S.health+=3; return 'Cooked a week of lunches.'; }},
+  {n:'Therapy session', cost:160, run:()=>{ S.happy+=6; S.smarts+=1; return 'Worked through a few things.'; }},
+  {n:'Night class', cost:1200, run:()=>{ S.smarts+=3; return 'Finished an evening class.'; }},
+  {n:'Read a nonfiction book', cost:25, run:()=>{ S.smarts+=2; return 'Finished a dense book.'; }},
+  {n:'Morning run', cost:0, run:()=>{ S.health+=2; S.happy+=1; return 'Ran before work.'; }},
+  {n:'Volunteer', cost:0, run:()=>{ S.happy+=3; S.smarts+=1; return 'Spent a Saturday at the food bank.'; }},
+  {n:'Vacation', cost:3000, run:()=>{ S.happy+=12; return 'Two weeks away.'; }},
+  {n:'Donate to charity', cost:500, run:()=>{ S.happy+=4; return 'Donated and felt good about it.'; }},
+  {n:'Networking event', cost:100, run:()=>{ if(S.job && Math.random()<0.2){ S.job.pay=Math.round(S.job.pay*1.04); return 'A contact offered you a referral. Pay bumped 4%.'; } S.charm+=2; return 'Met a few useful people.'; }},
+  {n:'Sell stuff online', cost:0, run:()=>{ const t=Math.round(R(40,400)); S.cash+=t; return `Sold some old things for ${money(t)}.`; }},
+  {n:'Lottery ticket', cost:10, run:()=>{ if(Math.random()<1/CFG.lottery){ const w=Math.round(R(500,5000)); S.cash+=w; return `You won ${money(w)}!`; } return 'No luck.'; }},
+  {n:'Take a personal loan ($5,000)', cost:0, run:()=>{ if(S.credit<600) return 'Your credit score is too low for a loan.'; S.cash+=5000; S.debt+=5000; return 'Borrowed $5,000 at 10% a year.'; }},
+  {n:'Pay down debt ($1,000)', cost:0, run:()=>{ if(S.debt<=0) return 'No debt to pay.'; const p=Math.min(S.debt,1000,Math.max(0,S.cash)); if(p<=0) return 'Not enough cash to pay.'; S.debt-=p; S.cash-=p; return `Paid ${money(p)} toward debt.`; }},
+  {n:'Ask for a raise', cost:0, run:()=>{ if(!S.job) return 'You have no job to ask about.'; if(Math.random()<0.2+S.smarts/200+S.happy/400){ S.job.pay=Math.round(S.job.pay*1.05); return `Got a 5% raise. Now ${money(S.job.pay)}.`; } S.happy-=2; return 'Your boss said to revisit next year.'; }},
+  {n:'Extra shift', cost:0, run:()=>{ if(!S.job) return 'No job for extra shifts.'; const t=S.job.pay/12*0.72; S.cash+=t; S.health-=2; S.happy-=2; return `Worked an extra shift, +${money(t)}.`; }}
+];
+
+// Life events. min/max ages optional.
+// New life events. 'if' is an optional condition.
+const NEW_EVENTS = [
+  {if:()=>!!S.job, t:'Your company is cutting staff, and your job is on the list.', c:[
+    {l:'Take the severance', f:()=>{ const sv=Math.round(S.job.pay*0.25); S.cash+=sv; S.job=null; return `You got ${money(sv)} in severance.`; }},
+    {l:'Fight the decision', f:()=>{ if(Math.random()<0.4) return 'You kept your job.'; S.job=null; return 'You lost the fight and the job.'; }}]},
+  {t:'You were in a car accident. Nobody was seriously hurt.', c:[
+    {l:'Claim on insurance', f:()=>{ if(S.insured){ S.health-=3; return 'Your health plan covered most of the bills.'; } return pay(8000,'You paid $8,000 in repairs and medical bills.'); }},
+    {l:'Pay out of pocket', f:()=>pay(8000,'You paid $8,000 out of pocket.')}]},
+  {min:40, t:'A distant relative leaves you an inheritance.', c:[
+    {l:'Accept it', f:()=>{ const t=Math.round(R(20000,150000)); S.cash+=t; return `You inherited ${money(t)}.`; }},
+    {l:'Donate it', f:()=>{ S.happy+=6; return 'You donated it in their name.'; }}]},
+  {if:()=>!!(S.partner&&S.partner.married), t:'You and your spouse are separating.', c:[
+    {l:'Settle amicably', f:()=>{ const s=Math.round(Math.max(0,S.cash)*0.5); S.cash-=s; S.partner=null; S.happy-=12; return `You split the cash and gave ${money(s)} to them.`; }},
+    {l:'Fight it in court', f:()=>{ const s=Math.round(Math.max(0,S.cash)*0.6); S.cash-=s; S.partner=null; S.happy-=18; return `Lawyers cost ${money(s)}.`; }}]}
+];
+const EVENTS = [...NEW_EVENTS,
+  {max:12, t:'A teacher asks you to join the science fair.', c:[
+    {l:'Join', f:()=>{ S.smarts+=3; S.happy+=2; return 'Built a volcano. It worked.'; }},
+    {l:'Pass', f:()=>'You skipped it.'}]},
+  {max:12, t:'Your parents are arguing about money in the kitchen.', c:[
+    {l:'Go to bed', f:()=>{ S.happy-=3; return 'You lay awake listening.'; }},
+    {l:'Go in and ask', f:()=>{ S.happy+=2; return 'They hugged you and changed the subject.'; }}]},
+  {min:13, max:17, t:'A friend invites you to a camping weekend.', c:[
+    {l:'Go', f:()=>{ S.happy+=5; return 'Best weekend of the year.'; }},
+    {l:'Stay home', f:()=>{ S.happy-=2; return 'You stayed in and missed it.'; }}]},
+  {min:16, t:'You want a first job. A grocery chain is hiring.', c:[
+    {l:'Apply', f:()=>{ if(!S.job){ S.job={...JOBS[0]}; return 'Hired as a fast food crew member.'; } return 'You already have a job.'; }},
+    {l:'Not yet', f:()=>'You decided to wait.'}]},
+  {t:'Your car needs a $900 repair.', c:[
+    {l:'Pay it', f:()=>pay(900,'Repaired the car.')},
+    {l:'Ignore the light', f:()=>{ S.happy-=4; return 'The check engine light stays on.'; }}]},
+  {t:'Your landlord raises the rent by $150 a month.', c:[
+    {l:'Accept it', f:()=>pay(1800,'Paid the higher rent for the year.')},
+    {l:'Move out', f:()=>{ S.happy-=6; S.cash-=2000; return 'Moving costs $2,000.'; }}]},
+  {t:'You caught a flu that is going around the office.', c:[
+    {l:'Stay home', f:()=>{ S.health-=3; return 'A week of rest.'; }},
+    {l:'Push through', f:()=>{ S.health-=7; return 'You made it, barely.'; }}]},
+  {t:'A recruiter emails about a better role.', c:[
+    {l:'Interview', f:()=>{ if(Math.random()<S.smarts/120){ const base=S.job?S.job.pay:25000; S.job={n:'New employer role', pay:Math.round(base*1.2), need:null, sm:0}; return 'You got the offer. Pay is up 20%.'; } return 'They went with someone else.'; }},
+    {l:'Not interested', f:()=>'Archived the email.'}]},
+  {t:'You find a wallet with $300 inside.', c:[
+    {l:'Return it', f:()=>{ S.happy+=4; return 'The owner cried with gratitude.'; }},
+    {l:'Keep the cash', f:()=>{ S.cash+=300; S.happy-=2; return 'Kept the $300.'; }}]},
+  {t:'Tax season. Your return shows a refund.', c:[
+    {l:'Nice', f:()=>{ const r=Math.round(R(300,2200)); S.cash+=r; return `Refund of ${money(r)}.`; }}]},
+  {t:'A clip of you goes semi-viral online.', c:[
+    {l:'Post more', f:()=>{ if(Math.random()<0.3){ S.cash+=8000; S.charm+=3; return 'It blew up. $8,000 in sponsorships.'; } S.happy-=2; return 'The next one flopped.'; }},
+    {l:'Delete it', f:()=>'Back to normal life.'}]},
+  {t:'A cousin has a hot stock tip.', c:[
+    {l:'Invest $2,000', f:()=>{ if(S.cash<2000) return 'Not enough cash.'; S.cash-=2000; S.stock+=2000; return 'Put $2,000 in the market.'; }},
+    {l:'Pass', f:()=>'You kept your money.'}]},
+  {t:'Your parent needs help with bills.', c:[
+    {l:'Send $1,000', f:()=>pay(1000,'Helped them out.')},
+    {l:'Tell them to figure it out', f:()=>{ S.happy-=5; return 'That was a hard conversation.'; }}]},
+  {t:'A speeding ticket in the mail.', c:[
+    {l:'Pay $250', f:()=>pay(250,'Paid the fine.')},
+    {l:'Fight it', f:()=>{ if(Math.random()<0.5) return 'Won in court.'; S.cash-=600; return 'Lost. $600 in fees.'; }}]},
+  {t:'A local newspaper wants to profile you.', c:[
+    {l:'Do the interview', f:()=>{ S.happy+=4; S.charm+=2; return 'The piece ran on page three.'; }},
+    {l:'No thanks', f:()=>'Kept things private.'}]}
+];
+
+const FLAVOR = [
+  'A stranger holds the elevator and you chat for a minute.',
+  'You finally fixed the squeaky door.',
+  'The weather was perfect for a whole week.',
+  'You spent a Sunday reorganizing the closet.',
+  'Someone remembered your name after one meeting.',
+  'Good coffee on a cold morning.',
+  'A quiet, ordinary year. Those count too.'
+];
+
+function has(id){ return S.degrees.includes(id); }
+function eduName(id){ const e=EDU.find(x=>x.id===id); return e?e.n:(id==='hs'?'High school diploma':id); }
+function log(m){ S.log.unshift(`Age ${S.age}: ${m}`); if(S.log.length>CFG.logLen) S.log.pop(); }
+function norm(){ for(const k of ['health','happy','smarts','looks','charm']) S[k]=clamp(S[k]); }
+function pay(n,msg){ if(S.cash<n){ S.happy-=3; return 'Could not afford it, so it stung.'; } S.cash-=n; return msg; }
+function nw(){
+  return S.cash + S.savings + S.stock + (S.biz?S.biz.value:0)
+    + S.items.reduce((t,id)=>t+ITEMS[id].price*0.5,0) - S.debt;
+}
+function stage(){
+  const a=S.age;
+  return a<5?'Early childhood':a<13?'Childhood':a<18?'Teenager':a<25?'Young adult':a<65?'Adult':'Retirement';
+}
+
+function newGame(name){
+  S = {
+    name, age:0, cash:CFG.startCash, savings:0, debt:0, stock:0, biz:null,
+    health:Math.round(R(70,95)), happy:60, smarts:Math.round(R(10,30)), looks:Math.round(R(30,70)), charm:Math.round(R(30,70)),
+    degrees:[], school:null, prog:0, job:null, items:[],
+    partner:null, friends:[], kids:[],
+    ap:CFG.ap, log:[], pending:null, dead:false, tab:'life', credit:650, retire:0, city:0, jobYears:0, hist:[], insured:false, onlyOk:false, sortPay:false
+  };
+  log(`Born in ${pick(TOWNS)}.`);
+}
+
+function startGame(){
+  const n = ($('nm').value||'').trim() || pick(FIRST);
+  newGame(n); render();
+}
+
+const SEARCH={};
+function match(k,text){ const q=(SEARCH[k]||'').trim().toLowerCase(); return !q || String(text).toLowerCase().includes(q); }
+function sbox(k,ph){ return `<input class="search" id="q-${k}" placeholder="${ph}" value="${esc(SEARCH[k]||'')}" oninput="filt('${k}',this.value)">`; }
+function filt(k,v){ SEARCH[k]=v; render(); const n=$('q-'+k); if(n){ n.focus(); n.setSelectionRange(v.length,v.length); } }
+function setTab(t){ S.tab=t; render(); }
+
+function canAct(){ return S && !S.dead && !S.pending && S.ap>0; }
+
+function act(i){
+  const a=ACTS[i];
+  if(!canAct()) return;
+  if(a.cost && S.cash<a.cost){ log(`Not enough cash for "${a.n}".`); render(); return; }
+  S.cash-=a.cost; S.ap--;
+  S.acts=(S.acts||0)+1; log(a.run()); norm(); render();
+}
+
+function enroll(id){
+  const P=EDU.find(e=>e.id===id);
+  if(!canAct() || S.school) return;
+  if(!has('hs')){ log('You need a high school diploma first.'); render(); return; }
+  if(P.req && !has(P.req)){ log(`You need ${eduName(P.req)} first.`); render(); return; }
+  if(S.smarts<P.sm){ log(`${P.n} needs more smarts.`); render(); return; }
+  if(S.cash<P.cost){ log(`Can't cover the first year of ${P.n}.`); render(); return; }
+  S.cash-=P.cost; S.cash+=P.stipend; S.school=id; S.prog=1; S.ap--;
+  log(`Enrolled in ${P.n}.`); render();
+}
+function quitSchool(){
+  if(!S.school) return;
+  log(`You left ${eduName(S.school)} before finishing.`); S.school=null; S.prog=0; render();
+}
+
+function applyJob(i){
+  const J=JOBS[i];
+  if(!canAct()) return;
+  if(S.age<16){ log('Too young to work a real job.'); render(); return; }
+  if(J.need && !has(J.need)){ log(`You need ${eduName(J.need)} for that.`); render(); return; }
+  if(S.smarts<J.sm){ log(`Didn't meet the requirements for ${J.n}.`); render(); return; }
+  S.job={...J}; S.ap--; log(`Started as a ${J.n.toLowerCase()} at ${money(J.pay)} a year.`); render();
+}
+function quitJob(){ if(!S.job) return; log(`You quit your job as a ${S.job.n.toLowerCase()}.`); S.job=null; render(); }
+
+function dateSomeone(){
+  if(!canAct()) return;
+  if(S.cash<120){ log('Not enough cash for a date night.'); render(); return; }
+  S.cash-=120; S.ap--;
+  if(!S.partner){
+    if(Math.random()<0.25+S.charm/150){ const n=pick(FIRST); S.partner={n, bond:45, married:false}; log(`You hit it off with ${n}.`); S.happy+=4; }
+    else log('The date fizzled. No spark.');
+  } else {
+    S.partner.bond=clamp(S.partner.bond+12); S.happy+=3; log(`A nice night out with ${S.partner.n}.`);
+  }
+  norm(); render();
+}
+function propose(){
+  if(!canAct()||!S.partner||S.partner.married) return;
+  if(S.partner.bond<70){ log(`${S.partner.n} isn't ready yet.`); render(); return; }
+  if(S.cash<26000){ log('A ring and wedding costs about $26,000.'); render(); return; }
+  S.cash-=26000; S.ap--; S.partner.married=true; S.happy+=12;
+  log(`You married ${S.partner.n}.`); render();
+}
+function haveKid(){
+  if(!canAct()||!S.partner||!S.partner.married||S.kids.length>=3) return;
+  S.ap--; S.kids.push(0); S.happy+=6; log('Your first child was born.'.replace('first','new')); render();
+}
+function breakUp(){
+  if(!S.partner) return;
+  log(`You and ${S.partner.n} split up.`); S.partner=null; S.happy-=10; render();
+}
+function meetPeople(){
+  if(!canAct()||S.friends.length>=12) return;
+  S.ap--; const n=pick(FIRST);
+  S.friends.push({n, bond:40}); log(`You became friends with ${n}.`); render();
+}
+function hangOut(i){
+  if(!canAct()) return;
+  const f=S.friends[i];
+  if(S.cash<40){ log('Not enough cash to hang out.'); render(); return; }
+  S.cash-=40; S.ap--; f.bond=clamp(f.bond+10); S.happy+=3; log(`Had dinner with ${f.n}.`); render();
+}
+
+function useItem(id){
+  if(!canAct()) return;
+  const sel=$('u-'+id); const j=Number(sel?sel.value:0);
+  const u=ITEMS[id].uses[j];
+  S.ap--; log(u.f());
+  if(u.sell) S.items=S.items.filter(x=>x!==id);
+  norm(); render();
+}
+function buyItem(id){
+  if(S.dead||S.pending) return;
+  const it=ITEMS[id];
+  if(S.items.includes(id)) return;
+  if(S.cash<it.price){ log(`Can't afford the ${it.n.toLowerCase()}.`); render(); return; }
+  S.cash-=it.price; S.items.push(id); log(`Bought a ${it.n.toLowerCase()} for ${money(it.price)}.`); render();
+}
+
+function depositSavings(){ if(S.dead||S.pending) return; if(S.cash<1000){ log('Need $1,000 to deposit.'); render(); return; } S.cash-=1000; S.savings+=1000; log('Deposited $1,000 into savings.'); render(); }
+function withdrawSavings(){ if(S.dead||S.pending) return; const p=Math.min(1000,S.savings); if(p<=0) return; S.savings-=p; S.cash+=p; log(`Withdrew ${money(p)} from savings.`); render(); }
+function buyStock(){ if(S.dead||S.pending) return; if(S.cash<1000){ log('Need $1,000 to buy stock.'); render(); return; } S.cash-=1000; S.stock+=1000; log('Put $1,000 into the stock market.'); render(); }
+function sellStock(){ if(S.stock<=0) return; S.cash+=Math.round(S.stock); log(`Sold all stock for ${money(S.stock)}.`); S.stock=0; render(); }
+function startBiz(){ if(S.biz||S.pending||S.dead) return; if(S.cash<5000){ log('A small business needs $5,000 to start.'); render(); return; } S.cash-=5000; S.biz={n:pick(BIZ), value:5000}; log(`Started a ${S.biz.n.toLowerCase()}.`); render(); }
+function investBiz(){ if(!canAct()||!S.biz) return; if(S.cash<3000){ log('Need $3,000 to reinvest.'); render(); return; } S.cash-=3000; S.biz.value+=3000; S.ap--; log(`Reinvested $3,000 in the ${S.biz.n.toLowerCase()}.`); render(); }
+function sellBiz(){ if(!S.biz) return; const t=Math.round(S.biz.value*0.8); S.cash+=t; log(`Sold the ${S.biz.n.toLowerCase()} for ${money(t)}.`); S.biz=null; render(); }
+
+function choose(i){
+  const ev=S.pending; if(!ev) return;
+  S.pending=null;
+  const msg=ev.c[i].f();
+  log(`${ev.t} ${msg}`);
+  norm(); render();
+}
+
+function die(msg){ S.dead=true; S.pending=null; log(msg); render(); }
+
+function ageUp(){
+  if(!S||S.pending||S.dead) return;
+  S.age++; S.ap=CFG.ap;
+
+  if(S.age>=18 && !has('hs')){ S.degrees.push('hs'); log('You earned your high school diploma.'); }
+  if(S.age<18){ S.smarts+=R(0,2); if(S.age>=6&&S.age<=17){ S.cash+=300; } }
+
+  if(S.school){
+    const P=EDU.find(e=>e.id===S.school);
+    if(P.cost>0 && S.prog<P.years && S.cash<P.cost){
+      log(`You couldn't keep up with the bills and left ${P.n}.`);
+      S.school=null; S.prog=0;
+    } else {
+      if(S.prog<P.years){ S.cash-=P.cost; S.cash+=P.stipend; } S.prog++;
+      if(S.prog>=P.years){
+        S.degrees.push(P.id); S.school=null; S.prog=0; S.smarts+=6;
+        log(`You graduated with ${P.n.toLowerCase()}.`);
+      } else log(`Year ${S.prog} of ${P.n}.`);
+    }
+  }
+
+  const kidCost=S.kids.filter(k=>k<18).length*12000;
+  if(kidCost){ S.cash-=kidCost; S.happy-=1; log(`Raising your kids cost ${money(kidCost)} this year.`); }
+  S.kids=S.kids.map(k=>k+1);
+
+  if(S.job){
+    if(S.age>=67){ log('You retired.'); S.job=null; }
+    else { const take=S.job.pay*CFG.takeHome/100; S.cash+=take; log(`Take-home from ${S.job.n.toLowerCase()}: ${money(take)}.`); }
+  }
+
+  if(S.partner){
+    S.partner.bond-=3;
+    if(S.partner.bond<=0){ log(`You and ${S.partner.n} drifted apart.`); S.partner=null; S.happy-=8; }
+  }
+  S.friends.forEach(f=>f.bond-=2);
+  S.friends=S.friends.filter(f=>f.bond>0);
+
+  const up=S.items.reduce((t,id)=>t+ITEMS[id].upkeep,0);
+  if(up){ S.cash-=up; log(`Upkeep on your things: ${money(up)}.`); }
+
+  if(S.savings>0){ const i=Math.round(S.savings*CFG.savingsRate/100); S.savings+=i; log(`Savings earned ${money(i)} in interest.`); }
+  if(S.debt>0) S.debt=Math.round(S.debt*(1+CFG.debtRate/100));
+  if(S.cash<0) S.happy-=2;
+  if(S.age>=18 && !S.items.includes('home')){ const lc=Math.round(12000*CITIES[S.city].m*CFG.living/100); S.cash-=lc; log(`Living costs in ${CITIES[S.city].n}: ${money(lc)}.`); }
+  const tax=Math.round(Math.max(0,nw()-200000)*CFG.wealthTax/100); if(tax){ S.cash-=tax; log(`Property and local taxes: ${money(tax)}.`); }
+  if(S.insured){ S.cash-=6000; S.health+=1; log('Health plan premium paid.'); }
+  if(S.retire>0) S.retire=Math.round(S.retire*1.06);
+  if(S.age>=67 && !S.job && S.retire>0){ const p=Math.round(S.retire*0.04); S.cash+=p; S.retire-=p; log(`Retirement withdrawal: ${money(p)}.`); }
+  if(S.debt>0) S.credit-=8; else S.credit+=3;
+  if(S.job){ S.jobYears=(S.jobYears||0)+1; if(S.jobYears>=2 && Math.random()<CFG.promo/100+S.smarts/400){ S.job.pay=Math.round(S.job.pay*1.08); log(`Promoted at your ${S.job.n.toLowerCase()} job. Pay up 8%.`); } }
+  if(S.debt>=60000 || S.cash<-15000){ S.debt=0; S.cash=Math.max(0,S.cash); S.credit=350; S.happy-=15; log('You filed for bankruptcy. Debts were wiped, and your credit took a hit.'); }
+  S.credit=Math.max(300,Math.min(850,S.credit));
+  S.hist.push(Math.round(nw()));
+  log(`Year-end: net worth ${money(nw())}, credit score ${S.credit}.`);
+
+  if(S.stock>0){ const f=R(1-CFG.stockVol/100,1+CFG.stockVol/100); S.stock=Math.round(S.stock*f); log(`The market ${f>1?'rose':'fell'}. Your stock is now ${money(S.stock)}.`); }
+  if(S.biz){
+    S.biz.value=Math.round(S.biz.value*R(0.85,1.25));
+    const inc=Math.round(S.biz.value*0.04); S.cash+=inc;
+    log(`Your ${S.biz.n.toLowerCase()} earned ${money(inc)} and is worth ${money(S.biz.value)}.`);
+  }
+
+  S.health-= (S.age>45 ? R(1,4) : R(0,2))*CFG.decay/100;
+  if(S.age>60) S.looks-=1;
+  S.happy+=(55-S.happy)*0.05;
+  norm();
+
+  if(S.health<=0){ die('Your health gave out.'); return; }
+  if(S.age>=CFG.deathAge && Math.random()<0.12){ die('You passed away peacefully, surrounded by people who loved you.'); return; }
+
+  const pool=EVENTS.filter(e=>S.age>=(e.min||0) && S.age<=(e.max||200) && (!e.if || e.if()));
+  if(pool.length && Math.random()<CFG.eventChance/100) S.pending=pick(pool);
+  else if(CFG.flavor) log(pick(FLAVOR));
+  render();
+}
+
+/* ---------- rendering ---------- */
+
+function row(title, sub, btn){
+  return `<div class="row"><div class="rt"><b>${title}</b>${sub?`<small>${sub}</small>`:''}</div><div class="acts">${btn||''}</div></div>`;
+}
+
+function barsHtml(){
+  return `<div class="bars">${[['health','Health'],['happy','Happiness'],['smarts','Smarts'],['looks','Looks'],['charm','Charm']].filter(([k])=>CFG['show_'+k])
+    .map(([k,l])=>`<div class="bar-row"><span>${l}</span><div class="bar"><i style="width:${S[k]}%"></i></div><b>${Math.round(S[k])}</b></div>`).join('')}</div>`;
+}
+
+function eventCard(){
+  if(!S.pending) return '';
+  return `<div class="card event"><p>${esc(S.pending.t)}</p><div class="choices">${S.pending.c.map((c,i)=>`<button class="btn" onclick="choose(${i})">${esc(c.l)}</button>`).join('')}</div></div>`;
+}
+
+// Four rotating actions shown on the Life page, refreshed each year, so they're easy to find.
+// Milestones: one per degree, plus net worth, age, actions, friends, children, and owned assets. Recomputed on each view.
+function milestoneList(){
+  const L=[];
+  EDU.forEach(P=>L.push({n:`Earned ${P.n}`, ok:()=>S.degrees.includes(P.id)}));
+  [1000,5000,10000,25000,50000,100000,250000,500000,1000000,2500000,5000000,10000000].forEach(t=>L.push({n:`Net worth reaches ${money(t)}`, ok:()=>nw()>=t}));
+  [5,10,13,16,18,21,25,30,35,40,45,50,55,60,65,70,75,80,85,90].forEach(a=>L.push({n:`Reach age ${a}`, ok:()=>S.age>=a}));
+  [10,25,50,100,250,500].forEach(c=>L.push({n:`Complete ${c} actions`, ok:()=>(S.acts||0)>=c}));
+  [1,3,6,12].forEach(f=>L.push({n:`Keep ${f} close friend${f>1?'s':''}`, ok:()=>S.friends.length>=f}));
+  [1,2,3].forEach(k=>L.push({n:`Raise ${k} child${k>1?'ren':''}`, ok:()=>S.kids.length>=k}));
+  Object.keys(ITEMS).forEach(id=>L.push({n:`Own a ${ITEMS[id].n.toLowerCase()}`, ok:()=>S.items.includes(id)}));
+  return L;
+}
+function milestonesTab(){
+  const L=milestoneList(); const done=L.filter(m=>m.ok()).length;
+  return `<div class="card"><h2>Milestones \u00b7 ${done} of ${L.length}</h2><div class="bar-big"><i style="width:${done/L.length*100}%"></i></div><div class="list">${L.map(m=>{ const ok=m.ok(); return `<div class="row"><div class="rt"><b>${esc(m.n)}</b></div><div class="acts"><span class="btn ${ok?'':'ghost'}" style="cursor:default">${ok?'Unlocked':'Locked'}</span></div></div>`; }).join('')}</div></div>`;
+}
+// Settings helpers and tab.
+function applyLook(){ document.body.style.fontSize=CFG.font+'px'; document.documentElement.style.setProperty('--acc',CFG.accent); }
+function setCfg(k,v,r=true){ CFG[k]=v; applyLook(); if(r) render(); }
+function resetCfg(){ Object.assign(CFG,CFG_DEFAULT); applyLook(); render(); }
+function settingsTab(){
+  const secs=[...new Set(SET_UI.map(x=>x[0]))];
+  return secs.map(sec=>`<div class="card"><h2>${sec}</h2>${SET_UI.filter(x=>x[0]===sec).map(x=>{
+    const [,k,l,t,a,b,c]=x; let ctl='';
+    if(t==='bool') ctl=`<input type="checkbox" ${CFG[k]?'checked':''} onchange="setCfg('${k}',this.checked)">`;
+    else if(t==='num') ctl=`<input type="range" min="${a}" max="${b}" step="${c}" value="${CFG[k]}" oninput="setCfg('${k}',+this.value,false);this.nextElementSibling.textContent=this.value"> <b style="display:inline-block;min-width:44px;text-align:right">${CFG[k]}</b>`;
+    else ctl=`<select onchange="setCfg('${k}',this.value)">${a.map(([v,tx])=>`<option value="${v}" ${CFG[k]==v?'selected':''}>${tx}</option>`).join('')}</select>`;
+    return `<div class="row"><div class="rt"><b>${l}</b></div><div class="acts">${ctl}</div></div>`;
+  }).join('')}</div>`).join('') + `<div class="card"><h2>Reset</h2>${row('Restore defaults','Put every setting back to how it started','<button class="btn ghost" onclick="resetCfg()">Reset</button>')}</div>`;
+}
+function quickCard(){ if(!CFG.showQuick) return '';
+  if(!S.quick || S.quickAge!==S.age){ S.quick=[...Array(CFG.quickN)].map(()=>Math.floor(Math.random()*ACTS.length)); S.quickAge=S.age; }
+  return `<div class="card"><h2>Try this year</h2><div class="acts" style="flex-wrap:wrap">${S.quick.map(i=>{ const a=ACTS[i]; const can=canAct()&&(!a.cost||S.cash>=a.cost); return `<button class="btn ${can?'':'ghost'}" ${can?'':'disabled'} onclick="act(${i})">${esc(a.n)}${a.cost?' \u00b7 '+money(a.cost):''}</button>`; }).join('')}</div><div class="hint" style="margin-top:8px">New picks each year. ${ACTS.length} actions are in the Activities tab.</div></div>`;
+}
+function lifeTab(){
+  const job=S.job?`${esc(S.job.n)} · ${money(S.job.pay)}/yr`:'None';
+  const school=S.school?`${esc(eduName(S.school))}, year ${S.prog} of ${EDU.find(e=>e.id===S.school).years}`:'Not in school';
+  const partner=S.partner?`${esc(S.partner.n)}${S.partner.married?' (married)':''}`:'Single';
+  const kids=S.kids.length?S.kids.map(k=>k+' yr').join(', '):'None';
+  return `
+  ${quickCard()}<div class="card"><h2>${esc(stage())} \u00b7 Age ${S.age}</h2>${barsHtml()}</div>
+  <div class="card"><h2>Finances and life</h2>
+    <div class="facts">
+      <div class="fact"><span>Cash</span><b class="${S.cash<0?'neg':''}">${money(S.cash)}</b></div>
+      <div class="fact"><span>Net worth</span><b>${money(nw())}</b></div>
+      <div class="fact"><span>Savings</span><b>${money(S.savings)}</b></div>
+      <div class="fact"><span>Debt</span><b class="${S.debt>0?'neg':''}">${money(S.debt)}</b></div>
+      <div class="fact"><span>Job</span><b>${job}</b></div>
+      <div class="fact"><span>Education</span><b>${school}</b></div>
+      <div class="fact"><span>Partner</span><b>${partner}</b></div>
+      <div class="fact"><span>Children</span><b>${kids}</b></div><div class="fact"><span>Credit score</span><b>${S.credit}</b></div><div class="fact"><span>City</span><b>${CITIES[S.city].n}</b></div><div class="fact"><span>Retirement fund</span><b>${money(S.retire)}</b></div><div class="fact"><span>Health plan</span><b>${S.insured?'Yes':'No'}</b></div>
+    </div>
+    <div class="hint" style="margin-top:12px">Action points this year: ${S.ap} of 4</div>
+  </div>
+  ${(()=>{ const b=[['First job',!!S.job],['Graduate',S.degrees.some(d=>d!=='hs')],['Married',!!(S.partner&&S.partner.married)],['Parent',S.kids.length>0],['Homeowner',S.items.includes('home')],['Debt-free',S.debt===0&&S.age>=30],['Millionaire',nw()>=1000000],['Retired',S.age>=67&&!S.job]]; return `<div class="card"><h2>Milestones</h2><div class="acts" style="flex-wrap:wrap">${b.map(([n,ok])=>`<span class="btn ${ok?'':'ghost'}">${n}</span>`).join('')}</div></div>`; })()}
+  ${(()=>{ const h=S.hist.slice(-40); const mx=Math.max(1,...h.map(v=>Math.abs(v))); return `<div class="card"><h2>Net worth by year</h2><div style="height:70px;display:flex;align-items:flex-end;gap:2px">${h.map(v=>`<i title="${money(v)}" style="flex:1;min-width:3px;height:${Math.max(2,Math.round(Math.abs(v)/mx*70))}px;background:${v<0?'var(--bad)':'var(--acc)'}"></i>`).join('')||'<span class="hint">Your history starts after your first birthday.</span>'}</div></div>`; })()}
+  <div class="card"><h2>Your story</h2><div class="log">${S.log.map(l=>`<div>${esc(l)}</div>`).join('')}</div></div>`;
+}
+
+function eduTab(){
+  let cur='';
+  if(S.school){
+    const P=EDU.find(e=>e.id===S.school);
+    cur=`<div class="card"><h2>Currently studying</h2>
+      <div class="row"><div class="rt"><b>${esc(P.n)}</b><small>Year ${S.prog} of ${P.years}${P.cost?' · '+money(P.cost)+'/yr tuition':''}${P.stipend?' · stipend '+money(P.stipend)+'/yr':''}</small></div>
+      <div class="acts"><button class="btn ghost" onclick="quitSchool()">Drop out</button></div></div>
+      <div class="bar-big"><i style="width:${(S.prog/P.years)*100}%"></i></div></div>`;
+  }
+  const hs = has('hs') ? 'Completed' : 'Not yet (finishes at 18)';
+  const done = S.degrees.filter(d=>d!=='hs').map(d=>`<div class="row"><div class="rt"><b>${esc(eduName(d))}</b></div><div class="acts"><span class="meta">Earned</span></div></div>`).join('');
+  const list = EDU.map((P,i)=>{
+    if(!match('edu',P.n+' '+P.d)) return '';
+    const ok = has(P.id) ? 'Completed' : '';
+    const need = P.req?eduName(P.req):'High school diploma';
+    const btn = has(P.id) ? '<span class="meta">Done</span>'
+      : `<button class="btn" ${(!canAct()||S.school)?'disabled':''} onclick="enroll('${P.id}')">Enroll</button>`;
+    return row(esc(P.n), `${P.years} years · ${P.cost?money(P.cost)+'/yr':'tuition-free'}${P.stipend?' · paid '+money(P.stipend)+'/yr':''} · needs ${esc(need)} · smarts ${P.sm}+<br>${esc(P.d)}`, btn);
+  }).join('');
+  return `${cur}
+  <div class="card"><h2>Schooling</h2>
+    ${row('High school diploma', 'Automatic at 18', `<span class="meta">${hs}</span>`)}
+  </div>
+  <div class="card"><h2>Programs</h2>${sbox('edu','Search programs')}<div class="list">${list}</div></div>
+  <div class="card"><h2>Credentials</h2>${done || '<div class="hint">No degrees yet.</div>'}</div>`;
+}
+
+function careerTab(){
+  const cur = S.job
+    ? `<div class="card"><h2>Current job</h2>${row(esc(S.job.n), money(S.job.pay)+' a year · about '+money(S.job.pay*0.72)+' take-home', `<button class="btn ghost" onclick="quitJob()">Quit</button>`)}
+       <div class="acts" style="margin-top:12px;flex-wrap:wrap">
+         <button class="btn ghost" ${canAct()?'':'disabled'} onclick="act(${ACTS.findIndex(a=>a.n==='Extra shift')})">Extra shift</button>
+         <button class="btn ghost" ${canAct()?'':'disabled'} onclick="act(${ACTS.findIndex(a=>a.n==='Ask for a raise')})">Ask for a raise</button>
+         <button class="btn ghost" ${canAct()?'':'disabled'} onclick="act(${ACTS.findIndex(a=>a.n==='Networking event')})">Networking</button>
+       </div></div>`
+    : `<div class="card"><h2>Current job</h2><div class="hint">Unemployed. Pick something below.</div></div>`;
+  const jobs = (S.sortPay?JOBS.map((J,i)=>i).sort((a,b)=>JOBS[b].pay-JOBS[a].pay):JOBS.map((J,i)=>i)).map(i=>{
+    const J=JOBS[i];
+    if(!match('career',J.n+' '+(J.need?eduName(J.need):'no degree'))) return '';
+    const cur2 = S.job && S.job.n===J.n;
+    const why = J.need && !has(J.need) ? `needs ${eduName(J.need)}` : (S.smarts<J.sm ? `needs smarts ${J.sm}` : '');
+    if(S.onlyOk && why) return '';
+    const ok = !cur2 && canAct() && S.age>=16 && !why;
+    return row(esc(J.n), `${money(J.pay)} a year${why?' · '+why:''}${cur2?' · current':''}`,
+      `<button class="btn ${ok?'':'ghost'}" ${ok?'':'disabled'} onclick="applyJob(${i})">${cur2?'Working':'Apply'}</button>`);
+  }).join('');
+  return `${cur}<div class="card"><h2>Jobs</h2>${sbox('career','Search careers')}<div class="acts" style="margin-bottom:8px;flex-wrap:wrap"><button class="btn ghost" onclick='S.onlyOk=!S.onlyOk;render()'>${S.onlyOk?'Showing qualified only':'Only show jobs I qualify for'}</button><button class="btn ghost" onclick='S.sortPay=!S.sortPay;render()'>${S.sortPay?'Sorted by pay':'Sort by pay'}</button></div><div class="list">${jobs}</div></div>`;
+}
+
+function peopleTab(){
+  let partner;
+  if(!S.partner){
+    partner = `${row('Nobody right now','Go on a date to meet someone',`<button class="btn" ${canAct()&&S.cash>=120?'':'disabled'} onclick="dateSomeone()">Date · $120</button>`)}`;
+  } else {
+    const p=S.partner;
+    partner = `<div class="row"><div class="rt"><b>${esc(p.n)}${p.married?' · married':''}</b><small>Bond ${Math.round(p.bond)}/100</small></div></div>
+      <div class="bar-big"><i style="width:${p.bond}%"></i></div>
+      <div class="acts" style="flex-wrap:wrap;margin-top:10px">
+        <button class="btn" ${canAct()&&S.cash>=120?'':'disabled'} onclick="dateSomeone()">Date · $120</button>
+        ${!p.married?`<button class="btn ghost" ${canAct()&&p.bond>=70&&S.cash>=26000?'':'disabled'} onclick="propose()">Propose · $26,000</button>`:''}
+        ${p.married?`<button class="btn ghost" ${canAct()&&S.kids.length<3?'':'disabled'} onclick="haveKid()">Have a child</button>`:''}
+        <button class="btn ghost" onclick="breakUp()">Break up</button>
+      </div>`;
+  }
+  const friends = S.friends.length ? S.friends.map((f,i)=>row(esc(f.n), `Closeness ${Math.round(f.bond)}/100`,
+      `<button class="btn ghost" ${canAct()&&S.cash>=40?'':'disabled'} onclick="hangOut(${i})">Hang out · $40</button>`)).join('')
+    : '<div class="hint">No close friends yet.</div>';
+  return `
+  <div class="card"><h2>Partner</h2>${partner}</div>
+  <div class="card"><h2>Friends</h2>
+    <div class="acts" style="margin-bottom:6px"><button class="btn ghost" ${canAct()&&S.friends.length<12?'':'disabled'} onclick="meetPeople()">Meet someone new</button></div>
+    <div class="list">${friends}</div>
+  </div>
+  <div class="card"><h2>Children</h2>${S.kids.length?S.kids.map((k,i)=>row(`Child ${i+1}`,`Age ${k}${k<18?' · costs about $12,000 a year':''}`,'')).join(''):'<div class="hint">No children.</div>'}</div>`;
+}
+
+function activitiesTab(){
+  const acts = ACTS.map((a,i)=>!match('act',a.n)?'':row(esc(a.n), a.cost?money(a.cost):'Free',
+    `<button class="btn ${canAct()&&(!a.cost||S.cash>=a.cost)?'':'ghost'}" ${canAct()&&(!a.cost||S.cash>=a.cost)?'':'disabled'} onclick="act(${i})">Do it</button>`)).join('');
+  return `
+  <div class="card"><h2>Activities · ${ACTS.length} to try</h2>${sbox('act','Search activities')}<div class="hint">Free items are marked Free. Use search to find one fast.</div><div class="list">${acts}</div></div>
+  <div class="card"><h2>Money</h2>
+    ${row('Savings', `Balance ${money(S.savings)} · pays about 4% a year`, `<div class="acts"><button class="btn ghost" onclick="depositSavings()">+$1,000</button><button class="btn ghost" onclick="withdrawSavings()">−$1,000</button></div>`)}
+    ${row('Stock market', `Holding ${money(S.stock)} · moves every year`, `<div class="acts"><button class="btn ghost" onclick="buyStock()">+$1,000</button><button class="btn ghost" ${S.stock>0?'':'disabled'} onclick="sellStock()">Sell all</button></div>`)}
+    ${S.biz
+      ? row(esc(S.biz.n), `Worth ${money(S.biz.value)}`, `<div class="acts"><button class="btn ghost" ${canAct()?'':'disabled'} onclick="investBiz()">+$3,000</button><button class="btn ghost" onclick="sellBiz()">Sell (80%)</button></div>`)
+      : row('Small business', 'Costs $5,000 to start', `<button class="btn ghost" ${S.pending?'disabled':''} onclick="startBiz()">Start</button>`)}
+  </div>`;
+}
+
+function assetsTab(){
+  const owned = S.items.length ? S.items.filter(id=>match('assets',ITEMS[id].n)).map(id=>{
+    const it=ITEMS[id];
+    const opts=it.uses.map((u,j)=>`<option value="${j}">${esc(u.l)}</option>`).join('');
+    return `<div class="row"><div class="rt"><b>${esc(it.n)}</b><small>Upkeep ${money(it.upkeep)} a year</small></div>
+      <div class="acts"><select id="u-${id}">${opts}</select><button class="btn" ${canAct()?'':'disabled'} onclick="useItem('${id}')">Use</button></div></div>`;
+  }).join('') : '<div class="hint">You own nothing yet.</div>';
+  const shop = Object.keys(ITEMS).filter(id=>!S.items.includes(id) && match('assets',ITEMS[id].n)).map(id=>{
+    const it=ITEMS[id];
+    return row(esc(it.n), `${money(it.price)} · upkeep ${money(it.upkeep)} a year`,
+      `<button class="btn ${S.cash>=it.price&&!S.pending?'':'ghost'}" ${S.cash>=it.price&&!S.pending?'':'disabled'} onclick="buyItem('${id}')">Buy</button>`);
+  }).join('');
+  return `${sbox('assets','Search assets')}<div class="card"><h2>Your things</h2>${owned}</div>
+  <div class="card"><h2>Shop</h2><div class="list">${shop||'<div class="hint">Nothing matches your search, or you own everything.</div>'}</div></div>`;
+}
+
+function render(){ applyLook();
+  if(!S){
+    $('hd-name').textContent='Hustle Life';
+    $('hd-meta').textContent='Start at birth. Build a life.';
+    $('tabs').innerHTML='';
+    $('ageBtn').style.display='none';
+    $('app').innerHTML=`<div class="title">Hustle Life</div>
+      <p class="meta">A long game about school, work, money, people, and the things you buy along the way.</p>
+      <div class="card"><h2>Begin</h2>
+        <input id="nm" placeholder="Your name (optional)" maxlength="20">
+        <button class="btn next" onclick="startGame()">Begin your life</button>
+      </div>`;
+    return;
+  }
+  $('ageBtn').style.display='';
+  $('hd-name').textContent=S.name;
+  $('hd-meta').textContent=`Age ${S.age} · ${money(S.cash)} cash · ${S.ap} actions left`;
+  $('ageBtn').disabled=!!S.pending||S.dead;
+  $('tabs').innerHTML=[['life','Life'],['edu','Education'],['career','Career'],['people','People'],['activities','Activities'],['assets','Assets'],['milestones','Milestones'],['settings','Settings']].filter(([k])=>CFG['tab_'+k]!==false)
+    .map(([k,l])=>`<button class="tab ${S.tab===k?'on':''}" onclick="setTab('${k}')">${l}</button>`).join('');
+
+  if(S.dead){
+    $('app').innerHTML=`<div class="card"><h2>Life ends at ${S.age}</h2>
+      <p>Final net worth: <b>${money(nw())}</b>. Degrees earned: ${S.degrees.length}.</p>
+      <button class="btn next" onclick="newGame(($('nm')&&$('nm').value.trim())||'${esc(S.name)}');render()">Start over</button>
+      <div class="log" style="margin-top:14px">${S.log.map(l=>`<div>${esc(l)}</div>`).join('')}</div></div>`;
+    return;
+  }
+  const tabs={life:lifeTab,edu:eduTab,career:careerTab,people:peopleTab,activities:activitiesTab,assets:assetsTab,milestones:milestonesTab,settings:settingsTab};
+  if(CFG['tab_'+S.tab]===false) S.tab='life'; $('app').innerHTML = eventCard() + tabs[S.tab]();
+}
+
+render();
+</script>
+</body>
+</html>
